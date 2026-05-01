@@ -12,3 +12,4 @@ Xcode Stubs/Ben/Ben.xcodeproj/xcuserdata/timedalatpour.xcuserdatad/xcschemes/xcs
 *.binlog
 publish/Ben.Client.ipa
 publish/Packaging.log
+.DS_Store
