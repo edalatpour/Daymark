@@ -4,6 +4,9 @@
 <dict>
     <key>keychain-access-groups</key>
     <array>
+        <!-- Required by MSAL: WithIosKeychainSecurityGroup("com.edalatpour.Ben") in AuthenticationService -->
+        <string>$(AppIdentifierPrefix)com.edalatpour.Ben</string>
+        <!-- Retained for MSAL ADAL cache interop -->
         <string>$(AppIdentifierPrefix)com.microsoft.adalcache</string>
     </array>
 </dict>

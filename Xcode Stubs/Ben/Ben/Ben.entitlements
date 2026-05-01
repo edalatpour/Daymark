@@ -5,7 +5,7 @@
 	<key>keychain-access-groups</key>
 	<array>
 		<string>$(AppIdentifierPrefix)com.microsoft.adalcache</string>
-		<string>$(AppIdentifierPrefix)com.edalatpour.Ben</string>
+		<string>$(AppIdentifierPrefix)com.edalatpour.ben</string>
 	</array>
 </dict>
 </plist>
