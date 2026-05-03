@@ -18,7 +18,7 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<LangVersion>preview</LangVersion>
+		<LangVersion>latestMajor</LangVersion>
 		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
 
 		<!-- Disable ReadyToRun by default to avoid runtime package errors during restore -->
@@ -31,8 +31,8 @@
 		<ApplicationId>com.edalatpour.ben</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
-		<ApplicationVersion>2</ApplicationVersion>
+		<ApplicationDisplayVersion>1.0.2</ApplicationDisplayVersion>
+		<ApplicationVersion>3</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>MSIX</WindowsPackageType>
@@ -80,7 +80,14 @@
 		<CodesignProvision>Ben Development</CodesignProvision>
 	</PropertyGroup>
 
-	<!-- iOS code signing — release / App Store build -->
+	<!-- iOS interpreter + linker settings — applied to all configurations -->
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+		<!-- UseInterpreter enables the Mono interpreter as a fallback for EF Core dynamic JIT methods;
+		     MtouchLink=SdkOnly preserves NuGet assemblies from trimming. Both bin and obj must be
+		     fully deleted before building or stale AOT artifacts will cause a startup crash. -->
+		<UseInterpreter>true</UseInterpreter>
+		<MtouchLink>SdkOnly</MtouchLink>
+	</PropertyGroup>
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' == 'ios-arm64'">
 		<CodesignKey>iPhone Distribution: Tim Edalatpour (QNQ323Z7FW)</CodesignKey>
 		<CodesignProvision>BenPlannerAppStore</CodesignProvision>

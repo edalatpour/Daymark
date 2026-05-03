@@ -1,12 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Data;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Networking;
 using Ben.Data;
 using Ben.Services;
 using Ben.Views;
 using Ben.ViewModels;
-using System.Data;
-using System.Text;
 
 namespace Ben;
 
@@ -15,47 +15,14 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
-
-        builder.UseMauiApp<App>()
-               .ConfigureFonts(fonts =>
-                {
-                    AppFontCatalog.ConfigureFonts(fonts);
-                });
+        builder.UseMauiApp<App>();
+        builder.ConfigureFonts(AppFontCatalog.ConfigureFonts);
 
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
 
-        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "planner.datasync.db");
-
-        builder.Services.AddSingleton(new DatasyncOptions
-        {
-            Endpoint = new Uri(Constants.ServiceUri)
-        });
-
-        builder.Services.AddSingleton<IConnectivity>(Connectivity.Current);
-
-        builder.Services.AddSingleton<AuthenticationService>();
-        builder.Services.AddSingleton<ThemeService>();
-        builder.Services.AddSingleton<UserFontService>();
-        builder.Services.AddSingleton<DatasyncSyncService>();
-
-        builder.Services.AddDbContext<LocalSchemaDbContext>(options =>
-        {
-            options.UseSqlite($"Filename={dbPath}");
-        });
-
-        builder.Services.AddDbContext<PlannerDbContext>((serviceProvider, options) =>
-        {
-            options.UseSqlite($"Filename={dbPath}");
-        });
-
-        // Register your data service (repository)
-        builder.Services.AddSingleton<PlannerRepository>();
-
-        // Keep one host page and one view model alive so date navigation reuses existing views.
-        builder.Services.AddSingleton<DailyViewModel>();
-        builder.Services.AddSingleton<DailyHostPage>();
+        RegisterServices(builder);
 
         var app = builder.Build();
 
@@ -63,7 +30,28 @@ public static class MauiProgram
         InitializeStartupServicesSafely(app);
 
         return app;
+    }
 
+    static void RegisterServices(MauiAppBuilder builder)
+    {
+        string dbPath = Path.Combine(FileSystem.AppDataDirectory, "planner.datasync.db");
+
+        builder.Services.AddSingleton(new DatasyncOptions { Endpoint = new Uri(Constants.ServiceUri) });
+        builder.Services.AddSingleton<IConnectivity>(Connectivity.Current);
+
+        builder.Services.AddSingleton<AuthenticationService>();
+        builder.Services.AddSingleton<ThemeService>();
+        builder.Services.AddSingleton<UserFontService>();
+        builder.Services.AddSingleton<DatasyncSyncService>();
+
+        builder.Services.AddDbContext<LocalSchemaDbContext>(options => options.UseSqlite("Filename=" + dbPath));
+        builder.Services.AddDbContext<PlannerDbContext>((_, options) => options.UseSqlite("Filename=" + dbPath));
+
+        builder.Services.AddSingleton<PlannerRepository>();
+
+        // Keep one host page and one view model alive so date navigation reuses existing views.
+        builder.Services.AddSingleton<DailyViewModel>();
+        builder.Services.AddSingleton<DailyHostPage>();
     }
 
     static void InitializeStartupServicesSafely(MauiApp app)

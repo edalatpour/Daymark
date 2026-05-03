@@ -6,6 +6,14 @@
       "type": "maui",
       "request": "launch",
       "preLaunchTask": "maui: Build"
+    },
+    {
+      "name": "iOS Release (Device)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "run-ios-release",
+      "program": "",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
