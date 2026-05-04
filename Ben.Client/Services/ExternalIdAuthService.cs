@@ -24,7 +24,7 @@ public class ExternalIdAuthService
     /// <summary>
     /// The client (application) ID registered in the External ID tenant.
     /// </summary>
-    private const string ClientId = "d5a4dd1f-e90b-4c48-8031-15041bd3c02c";
+    private const string ClientId = "0061f72b-2e92-4c32-9a5c-1f66dfc583a3";
 
     /// <summary>
     /// The custom policy name configured in the External ID tenant.
@@ -36,7 +36,7 @@ public class ExternalIdAuthService
     /// Must also be registered as a CFBundleURLScheme in Info.plist (iOS) and as an
     /// intent-filter scheme in AndroidManifest.xml (Android).
     /// </summary>
-    private const string RedirectUri = "msauth.com.edalatpour.ben://auth";
+    private const string RedirectUri = "myapp://auth";
 
     // -----------------------------------------------------------------------
     // Preferences keys (namespaced to avoid collisions with MSAL keys)
