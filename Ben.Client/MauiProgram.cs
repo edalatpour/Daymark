@@ -40,6 +40,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IConnectivity>(Connectivity.Current);
 
         builder.Services.AddSingleton<AuthenticationService>();
+        builder.Services.AddSingleton<ExternalIdAuthService>();
         builder.Services.AddSingleton<ThemeService>();
         builder.Services.AddSingleton<UserFontService>();
         builder.Services.AddSingleton<DatasyncSyncService>();

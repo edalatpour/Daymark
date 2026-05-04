@@ -100,7 +100,7 @@
                                          Spacing="12">
 
                                 <!-- Sign in with Microsoft (existing MSAL flow) -->
-                                <Image Source="ms_symbollockup_signin_dark.png"
+                                <Image Source="ms_symbollockup_signin_light.png"
                                        Aspect="AspectFit"
                                        HeightRequest="41"
                                        HorizontalOptions="Start">
@@ -120,14 +120,14 @@
                                 </Image>
 
                                 <!-- Sign in with Google (External ID flow) -->
-                                <Image Source="btn_google_signin_dark.png"
+                                <!-- <Image Source="btn_google_signin_dark.png"
                                        Aspect="AspectFit"
                                        HeightRequest="40"
                                        HorizontalOptions="Start">
                                     <Image.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnSignInGoogleTapped"/>
                                     </Image.GestureRecognizers>
-                                </Image>
+                                </Image> -->
 
                             </StackLayout>
 

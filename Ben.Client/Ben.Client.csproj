@@ -88,6 +88,8 @@
 		<UseInterpreter>true</UseInterpreter>
 		<MtouchLink>SdkOnly</MtouchLink>
 	</PropertyGroup>
+
+	<!-- iOS code signing — release / App Store build -->
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' == 'ios-arm64'">
 		<CodesignKey>iPhone Distribution: Tim Edalatpour (QNQ323Z7FW)</CodesignKey>
 		<CodesignProvision>BenPlannerAppStore</CodesignProvision>

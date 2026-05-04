@@ -333,6 +333,9 @@ public class ExternalIdAuthService
                 : property.Value.ToString();
         }
 
+        return claims;
+    }
+
     /// <summary>
     /// Extracts the <c>exp</c> (expiry) Unix timestamp from a JWT access_token and
     /// converts it to a <see cref="DateTimeOffset"/>. Returns <c>null</c> if the claim
