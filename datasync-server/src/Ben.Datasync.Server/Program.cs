@@ -7,12 +7,14 @@ using CommunityToolkit.Datasync.Server.NSwag;
 using CommunityToolkit.Datasync.Server.OpenApi;
 using CommunityToolkit.Datasync.Server.Swashbuckle;
 using System.IdentityModel.Tokens.Jwt;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Ben.Datasync.Server;
 
@@ -41,23 +43,38 @@ builder.Services.AddAuthentication(options =>
             string? authorization = context.Request.Headers.Authorization;
             string? token = ExtractBearerToken(authorization);
             string? issuer = GetUnvalidatedIssuer(token);
+            string? audience = GetUnvalidatedAudience(token);
+
+            string selectedScheme = "LegacyJwt";
 
             if (!string.IsNullOrWhiteSpace(issuer)
                 && issuer.Contains("ciamlogin.com", StringComparison.OrdinalIgnoreCase))
             {
-                return "CiamJwt";
+                selectedScheme = "CiamJwt";
             }
 
-            return "LegacyJwt";
+            ILogger selectorLogger = context.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("Ben.Datasync.Server.AuthSchemeSelector");
+
+            selectorLogger.LogInformation(
+                "Auth scheme {Scheme} selected for {Method} {Path}. UnvalidatedIssuer={Issuer}, UnvalidatedAudience={Audience}",
+                selectedScheme,
+                context.Request.Method,
+                context.Request.Path,
+                issuer ?? "<null>",
+                audience ?? "<null>");
+
+            return selectedScheme;
         };
     })
     .AddJwtBearer("LegacyJwt", options =>
     {
-        ConfigureJwtBearer(options, legacyAuth);
+        ConfigureJwtBearer(options, legacyAuth, "LegacyJwt");
     })
     .AddJwtBearer("CiamJwt", options =>
     {
-        ConfigureJwtBearer(options, ciamAuth);
+        ConfigureJwtBearer(options, ciamAuth, "CiamJwt");
     });
 
 builder.Services.AddHttpContextAccessor();
@@ -179,7 +196,7 @@ static AuthSchemeSettings LoadAuthSchemeSettings(IConfiguration configuration, s
     return new AuthSchemeSettings(authority, validAudiences);
 }
 
-static void ConfigureJwtBearer(JwtBearerOptions options, AuthSchemeSettings settings)
+static void ConfigureJwtBearer(JwtBearerOptions options, AuthSchemeSettings settings, string schemeName)
 {
     options.Authority = settings.Authority;
     options.MapInboundClaims = false;
@@ -188,6 +205,82 @@ static void ConfigureJwtBearer(JwtBearerOptions options, AuthSchemeSettings sett
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidAudiences = settings.ValidAudiences
+    };
+
+    // For multi-tenant Microsoft authorities (common/organizations), metadata exposes
+    // a templated issuer. Accept concrete tenant issuers from login.microsoftonline.com.
+    if (string.Equals(schemeName, "LegacyJwt", StringComparison.Ordinal)
+        && IsMicrosoftMultiTenantAuthority(settings.Authority))
+    {
+        options.TokenValidationParameters.IssuerValidator = static (issuer, _, _) =>
+        {
+            if (IsMicrosoftTenantIssuer(issuer))
+            {
+                return issuer;
+            }
+
+            throw new SecurityTokenInvalidIssuerException(
+                $"LegacyJwt issuer '{issuer}' is not a supported Microsoft Entra tenant issuer.");
+        };
+    }
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = context =>
+        {
+            ILogger logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("Ben.Datasync.Server.JwtAuth");
+
+            string issuer = (context.SecurityToken as JwtSecurityToken)?.Issuer ?? "<unknown>";
+            string audience = (context.SecurityToken as JwtSecurityToken)?.Audiences.FirstOrDefault() ?? "<unknown>";
+            string subject = context.Principal?.FindFirst("sub")?.Value
+                ?? context.Principal?.Identity?.Name
+                ?? "<unknown>";
+
+            logger.LogInformation(
+                "JWT validated for scheme {Scheme}. Issuer={Issuer}, Audience={Audience}, Subject={Subject}",
+                schemeName,
+                issuer,
+                audience,
+                subject);
+
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            ILogger logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("Ben.Datasync.Server.JwtAuth");
+
+            string? authorization = context.Request.Headers.Authorization;
+            string? token = ExtractBearerToken(authorization);
+
+            logger.LogWarning(
+                context.Exception,
+                "JWT authentication failed for scheme {Scheme}. Authority={Authority}, AllowedAudiences={AllowedAudiences}, UnvalidatedIssuer={Issuer}, UnvalidatedAudience={Audience}",
+                schemeName,
+                settings.Authority,
+                string.Join(",", settings.ValidAudiences),
+                GetUnvalidatedIssuer(token) ?? "<null>",
+                GetUnvalidatedAudience(token) ?? "<null>");
+
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            ILogger logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("Ben.Datasync.Server.JwtAuth");
+
+            logger.LogWarning(
+                "JWT challenge for scheme {Scheme}. Error={Error}, ErrorDescription={ErrorDescription}",
+                schemeName,
+                context.Error ?? "<none>",
+                context.ErrorDescription ?? "<none>");
+
+            return Task.CompletedTask;
+        }
     };
 }
 
@@ -218,6 +311,49 @@ static string? GetUnvalidatedIssuer(string? token)
     {
         return null;
     }
+}
+
+static string? GetUnvalidatedAudience(string? token)
+{
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return null;
+    }
+
+    try
+    {
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        return string.Join(",", jwt.Audiences);
+    }
+    catch
+    {
+        return null;
+    }
+}
+
+static bool IsMicrosoftMultiTenantAuthority(string authority)
+{
+    if (string.IsNullOrWhiteSpace(authority))
+    {
+        return false;
+    }
+
+    return authority.Contains("login.microsoftonline.com/common/", StringComparison.OrdinalIgnoreCase)
+        || authority.Contains("login.microsoftonline.com/organizations/", StringComparison.OrdinalIgnoreCase);
+}
+
+static bool IsMicrosoftTenantIssuer(string? issuer)
+{
+    if (string.IsNullOrWhiteSpace(issuer))
+    {
+        return false;
+    }
+
+    return Regex.IsMatch(
+        issuer,
+        "^https://login\\.microsoftonline\\.com/[0-9a-fA-F-]{36}/v2\\.0/?$",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase,
+        TimeSpan.FromMilliseconds(100));
 }
 
 sealed record AuthSchemeSettings(string Authority, string[] ValidAudiences);
