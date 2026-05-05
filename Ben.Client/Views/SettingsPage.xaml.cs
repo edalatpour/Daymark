@@ -83,12 +83,6 @@ public partial class SettingsPage : ContentPage
         await _dailyViewModel.SignInWithAppleAsync();
     }
 
-    private async void OnSignInGoogleTapped(object sender, TappedEventArgs e)
-    {
-        // Launches the External ID sign-in flow for Google via WebAuthenticator
-        await _dailyViewModel.SignInWithGoogleAsync();
-    }
-
     private async void OnHelpTapped(object sender, TappedEventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(HelpPage));

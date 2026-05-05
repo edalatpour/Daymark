@@ -4,7 +4,7 @@ using Ben.Models;
 namespace Ben.Services;
 
 /// <summary>
-/// Handles sign-in with Apple and Google using Microsoft Entra External ID (CIAM)
+/// Handles Apple sign-in using Microsoft Entra External ID (CIAM)
 /// via the platform's WebAuthenticator (ASWebAuthenticationSession on iOS).
 ///
 /// CLIENT-SIDE ONLY — no backend calls are made. Token exchange happens entirely
@@ -27,9 +27,15 @@ public class ExternalIdAuthService
     private const string ClientId = "0061f72b-2e92-4c32-9a5c-1f66dfc583a3";
 
     /// <summary>
-    /// The custom policy name configured in the External ID tenant.
+    /// Tenant path segment used by the authorize endpoint.
+    /// For this CIAM tenant, discovery publishes the tenant GUID path segment.
     /// </summary>
-    private const string PolicyName = "B2C_1A_SignIn";
+    private const string TenantPathSegment = "90726599-91bc-4a3b-9761-cb55bb201026";
+
+    /// <summary>
+    /// Datasync API scope exposed by the CIAM API app registration.
+    /// </summary>
+    private const string DatasyncScope = "api://54072f18-bd6a-4835-82b3-11d6f4b4f467/access_as_user";
 
     /// <summary>
     /// Custom URL scheme redirect URI registered for this app in the External ID tenant.
@@ -66,7 +72,7 @@ public class ExternalIdAuthService
     /// <summary>True when the user is currently signed in via External ID.</summary>
     public bool IsAuthenticated => Preferences.Default.Get(AuthStateKey, false);
 
-    /// <summary>The provider that was last used to sign in ("Apple" or "Google").</summary>
+    /// <summary>The provider that was last used to sign in (currently "Apple").</summary>
     public string? Provider => Preferences.Default.Get(ProviderKey, (string?)null);
 
     /// <summary>Signed-in user's email address (may be null if not returned by provider).</summary>
@@ -80,60 +86,57 @@ public class ExternalIdAuthService
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Returns the stored External ID access_token as a Datasync-compatible
+    /// Returns the stored External ID bearer token as a Datasync-compatible
     /// <see cref="CommunityToolkit.Datasync.Client.Authentication.AuthenticationToken"/>.
     /// Called by <c>PlannerDbContext</c> on every outgoing Datasync HTTP request so
-    /// that the backend can identify the user regardless of which identity provider
-    /// they chose (Apple or Google).
+    /// that the backend can identify the user for the active Apple sign-in.
     /// </summary>
     public Task<CommunityToolkit.Datasync.Client.Authentication.AuthenticationToken> GetAuthenticationTokenAsync(
         CancellationToken cancellationToken = default)
     {
-        var accessToken = Preferences.Default.Get(AccessTokenKey, (string?)null) ?? string.Empty;
+        var accessToken = Preferences.Default.Get(AccessTokenKey, (string?)null);
+        var idToken = Preferences.Default.Get(IdTokenKey, (string?)null);
+        var bearerToken = !string.IsNullOrWhiteSpace(accessToken)
+            ? accessToken
+            : idToken ?? string.Empty;
         var userId = Preferences.Default.Get(UserIdKey, (string?)null) ?? string.Empty;
         var email = Preferences.Default.Get(UserEmailKey, (string?)null) ?? string.Empty;
 
         // Try to read the expiry from the JWT exp claim; fall back to 1 hour from now
-        var expiresOn = TryGetJwtExpiry(accessToken) ?? DateTimeOffset.UtcNow.AddHours(1);
+        var expiresOn = TryGetJwtExpiry(bearerToken) ?? DateTimeOffset.UtcNow.AddHours(1);
 
         return Task.FromResult(new CommunityToolkit.Datasync.Client.Authentication.AuthenticationToken
         {
             DisplayName = email,
             ExpiresOn = expiresOn,
-            Token = accessToken,
+            Token = bearerToken,
             UserId = userId
         });
     }
 
     /// <summary>
-    /// Launches the External ID sign-in flow for the specified identity provider.
+    /// Launches the External ID sign-in flow for Apple.
     /// Uses <see cref="WebAuthenticator"/> (ASWebAuthenticationSession on iOS) so the
     /// browser chrome is visible to the user and Apple's App Store guidelines are met.
     /// </summary>
-    /// <param name="provider">
-    /// The identity provider to use: "apple" or "google".
-    /// This value is passed as the <c>domain_hint</c> query parameter to the
-    /// External ID authorize endpoint to skip the provider-selection screen.
-    /// </param>
     /// <returns>
     /// A <see cref="UnifiedIdentity"/> when sign-in succeeds, or <c>null</c> when
     /// the user cancels or an error occurs.
     /// </returns>
-    public async Task<UnifiedIdentity?> AuthenticateAsync(string provider)
+    public async Task<UnifiedIdentity?> AuthenticateAsync()
     {
-        if (string.IsNullOrWhiteSpace(provider))
-            throw new ArgumentException("Provider name must not be empty.", nameof(provider));
+        const string provider = "apple";
 
-        if (OperatingSystem.IsWindows())
+        if (!OperatingSystem.IsIOS())
         {
-            Console.WriteLine($"[ExternalId] Sign in with {provider} is not supported on Windows because MAUI WebAuthenticator is not available on WinUI.");
+            Console.WriteLine("[ExternalId] Apple sign-in is currently enabled only on iOS builds.");
             return null;
         }
 
         try
         {
-            // Build the full authorize URL for the requested identity provider
-            var authorizeUrl = BuildAuthorizeUrl(provider);
+            // Build the full authorize URL for Apple sign-in
+            var authorizeUrl = BuildAuthorizeUrl();
 
             // callbackUri must match the redirect_uri registered in the External ID tenant
             var callbackUri = new Uri(RedirectUri);
@@ -141,27 +144,27 @@ public class ExternalIdAuthService
             Console.WriteLine($"[ExternalId] Launching WebAuthenticator for provider: {provider}");
             Console.WriteLine($"[ExternalId] Authorize URL: {authorizeUrl}");
 
-            // Launch ASWebAuthenticationSession (iOS) / Custom Tab (Android) / system browser (Windows)
+            // Launch ASWebAuthenticationSession on iOS
             var result = await WebAuthenticator.Default.AuthenticateAsync(
                 new Uri(authorizeUrl), callbackUri);
 
             // Parse the returned tokens and build the normalized identity
             return ParseAndStoreResult(result, provider);
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException)
         {
-            // User dismissed the browser without completing sign-in — not an error
-            Console.WriteLine($"[ExternalId] Sign-in cancelled by user (provider: {provider})");
+            // This can be a normal user cancel, but can also indicate callback mismatch/config issues.
+            Console.WriteLine($"[ExternalId] Sign-in canceled (provider: {provider}). This can be user cancel or callback mismatch. RedirectUri={RedirectUri}");
             return null;
         }
-        catch (PlatformNotSupportedException ex)
+        catch (PlatformNotSupportedException)
         {
-            Console.WriteLine($"[ExternalId] Platform does not support WebAuthenticator (provider: {provider}): {ex.Message}");
+            Console.WriteLine("[ExternalId] Platform does not support WebAuthenticator.");
             return null;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"[ExternalId] Authentication error (provider: {provider}): {ex.Message}");
+            Console.WriteLine($"[ExternalId] Authentication error (provider: {provider}).");
             return null;
         }
     }
@@ -196,17 +199,18 @@ public class ExternalIdAuthService
     /// No additional token-endpoint call is required on the client.
     ///
     /// Shape of the generated URL:
-    /// https://{TenantDomain}/{PolicyName}/oauth2/v2.0/authorize
+    /// https://{TenantDomain}/{TenantPathSegment}/oauth2/v2.0/authorize
     ///   ?client_id={ClientId}
     ///   &response_type=id_token token
     ///   &redirect_uri={RedirectUri}
     ///   &response_mode=fragment
-    ///   &scope=openid profile email
+    ///   &scope=openid profile email {DatasyncScope}
+    ///   &idp=Apple
     ///   &state={random-guid}
     ///   &nonce={random-guid}
-    ///   &domain_hint={provider}
+    ///   &domain_hint=apple
     /// </summary>
-    private static string BuildAuthorizeUrl(string provider)
+    private static string BuildAuthorizeUrl()
     {
         // Unique values per request to prevent replay attacks
         var state = Guid.NewGuid().ToString("N");
@@ -219,18 +223,19 @@ public class ExternalIdAuthService
             ("response_type",  "id_token token"),
             ("redirect_uri",   RedirectUri),
             ("response_mode",  "fragment"),
-            ("scope",          "openid profile email"),
+            ("scope",          $"openid profile email {DatasyncScope}"),
+            ("idp",            "Apple"),
             ("state",          state),
             ("nonce",          nonce),
-            ("domain_hint",    provider.ToLowerInvariant()),
+            ("domain_hint",    "apple"),
         };
 
         var queryString = string.Join("&",
             parameters.Select(p =>
                 $"{Uri.EscapeDataString(p.Item1)}={Uri.EscapeDataString(p.Item2)}"));
 
-        // External ID CIAM authorize endpoint (policy embedded in path segment)
-        return $"https://{TenantDomain}/{PolicyName}/oauth2/v2.0/authorize?{queryString}";
+        // External ID CIAM authorize endpoint from tenant discovery metadata.
+        return $"https://{TenantDomain}/{TenantPathSegment}/oauth2/v2.0/authorize?{queryString}";
     }
 
     // -----------------------------------------------------------------------
@@ -281,7 +286,7 @@ public class ExternalIdAuthService
             }
         }
 
-        // Capitalize the provider name for display consistency ("Apple", "Google")
+        // Capitalize the provider name for display consistency.
         var displayProvider = provider.Length > 0
             ? char.ToUpperInvariant(provider[0]) + (provider.Length > 1 ? provider[1..].ToLowerInvariant() : string.Empty)
             : provider;

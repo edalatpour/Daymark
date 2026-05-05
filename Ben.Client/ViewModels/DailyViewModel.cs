@@ -61,6 +61,11 @@ public class DailyViewModel : INotifyPropertyChanged
 
         // Initial update
         _ = UpdateStatus();
+
+        if (IsAuthenticated)
+        {
+            _ = RestoreAuthenticatedSessionAsync();
+        }
     }
 
     private void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
@@ -205,6 +210,55 @@ public class DailyViewModel : INotifyPropertyChanged
                 SyncStatusText = "Up to date";
             }
         }
+    }
+
+    private async Task RestoreAuthenticatedSessionAsync()
+    {
+        try
+        {
+            _syncService.Start();
+            _isSyncing = true;
+            await UpdateStatus();
+
+            _ = await _syncService.TrySyncNowAsync();
+            await LoadPageAsync(CurrentDay?.Key ?? KeyConvention.ToDateKey(CurrentDate));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error restoring authenticated session: {ex.Message}");
+        }
+        finally
+        {
+            _isSyncing = false;
+            await UpdateStatus();
+        }
+    }
+
+    private async Task InitializeSignedInUserAsync()
+    {
+        // Step 1: Recreate database to match current entities
+        Console.WriteLine("Initializing database for new user");
+        bool dbRecreated = await _dbContext.RecreateAndInitializeDatabaseAsync();
+        if (!dbRecreated)
+        {
+            Console.WriteLine("Warning: Database recreation failed, but proceeding with sync");
+        }
+
+        // Step 2: Ensure schema tracking database is initialized with migrations
+        Console.WriteLine("Applying schema migrations for new user");
+        await _schemaDbContext.Database.EnsureCreatedAsync();
+        LocalMigrationRunner.ApplyMigrations(_schemaDbContext);
+
+        // Step 3: Reinitialize Datasync client with new user's JWT
+        Console.WriteLine("Initializing Datasync client for new user");
+        bool clientInitialized = await _dbContext.ReinitializeDatasyncClientAsync();
+        if (!clientInitialized)
+        {
+            Console.WriteLine("Warning: Datasync client reinitialization failed");
+        }
+
+        // Step 4: Pull fresh data from server
+        await RestoreAuthenticatedSessionAsync();
     }
 
     async Task RefreshCurrentPageAfterSyncAsync()
@@ -1339,7 +1393,7 @@ public class DailyViewModel : INotifyPropertyChanged
 
         if (_externalIdAuthService.IsAuthenticated)
         {
-            // Sign out from External ID (Apple / Google) — no server calls needed
+            // Sign out from External ID (Apple) — no server calls needed
             _externalIdAuthService.SignOut();
             await UpdateStatus();
             return;
@@ -1351,44 +1405,11 @@ public class DailyViewModel : INotifyPropertyChanged
         {
             try
             {
-                // Step 1: Recreate database to match current entities
-                Console.WriteLine("Initializing database for new user");
-                bool dbRecreated = await _dbContext.RecreateAndInitializeDatabaseAsync();
-                if (!dbRecreated)
-                {
-                    Console.WriteLine("Warning: Database recreation failed, but proceeding with sync");
-                }
-
-                // Step 2: Ensure schema tracking database is initialized with migrations
-                Console.WriteLine("Applying schema migrations for new user");
-                await _schemaDbContext.Database.EnsureCreatedAsync();
-                LocalMigrationRunner.ApplyMigrations(_schemaDbContext);
-
-                // Step 3: Reinitialize Datasync client with new user's JWT
-                Console.WriteLine("Initializing Datasync client for new user");
-                bool clientInitialized = await _dbContext.ReinitializeDatasyncClientAsync();
-                if (!clientInitialized)
-                {
-                    Console.WriteLine("Warning: Datasync client reinitialization failed");
-                }
-
-                // Step 4: Pull fresh data from server
-                Console.WriteLine("Pulling initial data for new user");
-                _syncService.Start();
-                _isSyncing = true;
-                await UpdateStatus();
-
-                _ = await _syncService.TrySyncNowAsync();
-                await LoadPageAsync(CurrentDay?.Key ?? KeyConvention.ToDateKey(CurrentDate));
+                await InitializeSignedInUserAsync();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error during sign-in initialization: {ex.Message}");
-            }
-            finally
-            {
-                _isSyncing = false;
-                await UpdateStatus();
             }
         }
 
@@ -1404,46 +1425,22 @@ public class DailyViewModel : INotifyPropertyChanged
     {
         try
         {
-            var identity = await _externalIdAuthService.AuthenticateAsync("apple");
+            var identity = await _externalIdAuthService.AuthenticateAsync();
             if (identity == null)
             {
                 // Null is returned when the user cancels the browser or an error
                 // is handled inside ExternalIdAuthService (already logged there).
                 Console.WriteLine("[Auth] Sign in with Apple did not complete (cancelled or handled error).");
             }
-        }
-        catch (Exception ex)
-        {
-            // Unexpected unhandled error (e.g. ArgumentException from misconfiguration)
-            Console.WriteLine($"[Auth] Unexpected error during Sign in with Apple: {ex.Message}");
-        }
-        finally
-        {
-            await UpdateStatus();
-        }
-    }
-
-    /// <summary>
-    /// Signs in with Google via Microsoft Entra External ID using WebAuthenticator.
-    /// On success the authenticated user's identity is stored in Preferences and
-    /// the UI is refreshed via <see cref="ExternalIdAuthService.AuthenticationStateChanged"/>.
-    /// </summary>
-    public async Task SignInWithGoogleAsync()
-    {
-        try
-        {
-            var identity = await _externalIdAuthService.AuthenticateAsync("google");
-            if (identity == null)
+            else
             {
-                // Null is returned when the user cancels the browser or an error
-                // is handled inside ExternalIdAuthService (already logged there).
-                Console.WriteLine("[Auth] Sign in with Google did not complete (cancelled or handled error).");
+                await InitializeSignedInUserAsync();
             }
         }
         catch (Exception ex)
         {
             // Unexpected unhandled error (e.g. ArgumentException from misconfiguration)
-            Console.WriteLine($"[Auth] Unexpected error during Sign in with Google: {ex.Message}");
+            Console.WriteLine($"[Auth] Unexpected error during Sign in with Apple: {ex.Message}");
         }
         finally
         {

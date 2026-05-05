@@ -6,12 +6,14 @@ using CommunityToolkit.Datasync.Server;
 using CommunityToolkit.Datasync.Server.NSwag;
 using CommunityToolkit.Datasync.Server.OpenApi;
 using CommunityToolkit.Datasync.Server.Swashbuckle;
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Tokens;
 using Ben.Datasync.Server;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -24,8 +26,39 @@ bool nswagEnabled = swaggerDriver?.Equals("NSwag", StringComparison.InvariantCul
 bool swashbuckleEnabled = swaggerDriver?.Equals("Swashbuckle", StringComparison.InvariantCultureIgnoreCase) == true;
 bool openApiEnabled = swaggerDriver?.Equals("NET9", StringComparison.InvariantCultureIgnoreCase) == true;
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(builder.Configuration);
+AuthSchemeSettings legacyAuth = LoadAuthSchemeSettings(builder.Configuration, "AzureAd");
+AuthSchemeSettings ciamAuth = LoadAuthSchemeSettings(builder.Configuration, "AzureAdCiam");
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = "DynamicJwt";
+        options.DefaultChallengeScheme = "DynamicJwt";
+    })
+    .AddPolicyScheme("DynamicJwt", "Select JWT scheme by issuer", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            string? authorization = context.Request.Headers.Authorization;
+            string? token = ExtractBearerToken(authorization);
+            string? issuer = GetUnvalidatedIssuer(token);
+
+            if (!string.IsNullOrWhiteSpace(issuer)
+                && issuer.Contains("ciamlogin.com", StringComparison.OrdinalIgnoreCase))
+            {
+                return "CiamJwt";
+            }
+
+            return "LegacyJwt";
+        };
+    })
+    .AddJwtBearer("LegacyJwt", options =>
+    {
+        ConfigureJwtBearer(options, legacyAuth);
+    })
+    .AddJwtBearer("CiamJwt", options =>
+    {
+        ConfigureJwtBearer(options, ciamAuth);
+    });
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -121,3 +154,70 @@ if (openApiEnabled)
 }
 
 app.Run();
+
+static AuthSchemeSettings LoadAuthSchemeSettings(IConfiguration configuration, string sectionName)
+{
+    string authority = configuration[$"{sectionName}:Authority"]
+        ?? throw new ApplicationException($"{sectionName}:Authority is not set");
+    string? configuredAudience = configuration[$"{sectionName}:Audience"];
+    string? clientId = configuration[$"{sectionName}:ClientId"];
+    string[] validAudiences = [.. new[]
+    {
+        configuredAudience,
+        clientId,
+        string.IsNullOrWhiteSpace(clientId) ? null : $"api://{clientId}"
+    }
+        .Where(static value => !string.IsNullOrWhiteSpace(value))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Cast<string>()];
+
+    if (validAudiences.Length == 0)
+    {
+        throw new ApplicationException($"At least one of {sectionName}:Audience or {sectionName}:ClientId must be set");
+    }
+
+    return new AuthSchemeSettings(authority, validAudiences);
+}
+
+static void ConfigureJwtBearer(JwtBearerOptions options, AuthSchemeSettings settings)
+{
+    options.Authority = settings.Authority;
+    options.MapInboundClaims = false;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidAudiences = settings.ValidAudiences
+    };
+}
+
+static string? ExtractBearerToken(string? authorizationHeader)
+{
+    if (string.IsNullOrWhiteSpace(authorizationHeader)
+        || !authorizationHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+    {
+        return null;
+    }
+
+    return authorizationHeader["Bearer ".Length..].Trim();
+}
+
+static string? GetUnvalidatedIssuer(string? token)
+{
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return null;
+    }
+
+    try
+    {
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        return jwt.Issuer;
+    }
+    catch
+    {
+        return null;
+    }
+}
+
+sealed record AuthSchemeSettings(string Authority, string[] ValidAudiences);

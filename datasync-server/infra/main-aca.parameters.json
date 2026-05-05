@@ -12,13 +12,13 @@
       "value": "${SQL_CONNECTION_STRING}"
     },
     "azureAdTenantId": {
-      "value": "common"
+      "value": "90726599-91bc-4a3b-9761-cb55bb201026"
     },
     "azureAdClientId": {
-      "value": "${AZURE_AD_CLIENT_ID}"
+      "value": "54072f18-bd6a-4835-82b3-11d6f4b4f467"
     },
     "azureAdInstance": {
-      "value": "https://login.microsoftonline.com/"
+      "value": "https://benid.ciamlogin.com/"
     }
   }
 }

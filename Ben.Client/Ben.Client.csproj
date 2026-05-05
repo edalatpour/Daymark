@@ -63,7 +63,7 @@
 		<RuntimeIdentifiers>ios-arm64</RuntimeIdentifiers>
 	</PropertyGroup>
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)' != 'Release'">
-		<RuntimeIdentifier>iossimulator-x64</RuntimeIdentifier>
+		<RuntimeIdentifier>ios-arm64</RuntimeIdentifier>
 	</PropertyGroup>
 
 	<!-- iOS code signing — physical device debug build

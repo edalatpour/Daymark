@@ -101,11 +101,10 @@
 
                             </Grid>
 
-                            <!-- Not-authenticated state: three sign-in options -->
+                               <!-- Not-authenticated state: available sign-in options -->
                             <!-- Image files required in Resources/Images:
                                  ms_symbollockup_signin_dark.png  — from https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-branding-in-apps
-                                 signin_with_apple.png            — from https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple
-                                 btn_google_signin_dark.png       — from https://developers.google.com/identity/branding-guidelines -->
+                                   signin_with_apple.png            — from https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple -->
                             <HorizontalStackLayout
                                 IsVisible="{Binding AuthViewModel.IsAuthenticated, Converter={StaticResource InvertedBoolConverter}}"
                                 Spacing="12">
@@ -159,17 +158,6 @@
                                            HorizontalOptions="Center">
                                     </Image>
                                 </Border>
-
-                                <!-- Sign in with Google (External ID flow) -->
-                                <!-- <Image Source="btn_google_signin_dark.png"
-                                       Aspect="AspectFit"
-                                       HeightRequest="40"
-                                       HorizontalOptions="Start">
-                                    <Image.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnSignInGoogleTapped"/>
-                                    </Image.GestureRecognizers>
-                                </Image> -->
-
                             </HorizontalStackLayout>
 
                         </StackLayout>
