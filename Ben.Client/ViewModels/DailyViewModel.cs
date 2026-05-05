@@ -79,7 +79,7 @@ public class DailyViewModel : INotifyPropertyChanged
         UserAvatarSource = BuildUserAvatarSource();
 
         // Clear all data when signing out
-        if (!_authService.IsAuthenticated)
+        if (!IsAuthenticated)
         {
             CurrentDay.Tasks.Clear();
             CurrentDay.Notes.Clear();
@@ -1480,7 +1480,7 @@ public class DailyViewModel : INotifyPropertyChanged
 
     public async Task ForceSyncAsync()
     {
-        if (!_authService.IsAuthenticated)
+        if (!IsAuthenticated)
         {
             return;
         }
