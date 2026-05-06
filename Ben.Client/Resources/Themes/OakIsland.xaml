@@ -1,55 +1,71 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="Ben.Resources.Themes.OakIsland">
+        xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+        x:Class="Ben.Resources.Themes.OakIsland">
 
-    <!-- Oak Island Lighthouse — Tri-Band Gray -->
-    <!-- ThemeHeaderFont uses SF Pro Rounded on Apple platforms, Roboto elsewhere -->
+        <!-- Oak Island Lighthouse — Tri-Band Gray -->
+        <!-- ThemeHeaderFont uses SF Pro Rounded on Apple platforms, Roboto elsewhere -->
 
-    <Color x:Key="Paper">#F2F2F2</Color>
-    <Color x:Key="WritingPaper">#FFFFFF</Color>
+        <Color x:Key="Paper">#F2F2F2</Color>
+        <Color x:Key="WritingPaper">#FFFFFF</Color>
 
-    <Color x:Key="Ink">#1E1E1E</Color>
-    <Color x:Key="Line">#D0D0D0</Color>
+        <Color x:Key="Ink">#1E1E1E</Color>
+        <Color x:Key="Line">#D0D0D0</Color>
 
-    <Color x:Key="Accent">#B0B0B0</Color>
-    <Color x:Key="Link">#2E2E2E</Color>
+        <Color x:Key="Accent">#B0B0B0</Color>
+        <Color x:Key="Link">#2E2E2E</Color>
 
-    <Color x:Key="UserText">#000000</Color>
+        <Color x:Key="UserText">#000000</Color>
 
-    <Color x:Key="PageBackgroundBrush">#F2F2F2</Color>
-    <Color x:Key="CardBackgroundBrush">#FFFFFF</Color>
-    <Color x:Key="InkBrush">#1E1E1E</Color>
-    <Color x:Key="SecondaryInkBrush">#808080</Color>
-    <Color x:Key="GlyphBrush">#1E1E1E</Color>
-    <Color x:Key="AccentBrush">#B0B0B0</Color>
-    <Color x:Key="SelectionBrush">#80B0B0B0</Color>
-    <Color x:Key="HighlightBrush">#33B0B0B0</Color>
-    <Color x:Key="HeaderBackgroundBrush">#2E2E2E</Color>
-    <Color x:Key="HeaderForegroundBrush">#FFFFFF</Color>
-    <Color x:Key="CheckboxStrokeBrush">#A0A0A0</Color>
-    <Color x:Key="CheckboxFillBrush">#2E2E2E</Color>
-    <Color x:Key="BorderColor">#A0A0A0</Color>
-    <Color x:Key="GridLineColor">#D0D0D0</Color>
-    <Color x:Key="DividerColor">#D0D0D0</Color>
-    <x:Double x:Key="BorderThickness">1</x:Double>
-    <x:Double x:Key="DividerThickness">1</x:Double>
-    <x:Double x:Key="CornerRadius">6</x:Double>
-    <OnPlatform x:Key="ThemeHeaderFont"
-            x:TypeArguments="x:String">
-        <On Platform="iOS,MacCatalyst"
-                Value="SFProRounded-Medium"/>
-        <On Platform="Android,WinUI"
-                Value="Roboto"/>
-    </OnPlatform>
-    <OnPlatform x:Key="ThemeDateNumberFont"
-            x:TypeArguments="x:String">
-        <On Platform="iOS,MacCatalyst"
-                Value="SFProRounded-Medium"/>
-        <On Platform="Android,WinUI"
-                Value="Roboto"/>
-    </OnPlatform>
-    <x:String x:Key="ThemeDateDayFont">Roboto</x:String>
+        <Color x:Key="PageBackgroundBrush">#F2F2F2</Color>
+        <Color x:Key="CardBackgroundBrush">#FFFFFF</Color>
+        <Color x:Key="InkBrush">#1E1E1E</Color>
+        <Color x:Key="SecondaryInkBrush">#808080</Color>
+        <Color x:Key="GlyphBrush">#1E1E1E</Color>
+        <Color x:Key="AccentBrush">#B0B0B0</Color>
+        <Color x:Key="SelectionBrush">#80B0B0B0</Color>
+        <Color x:Key="HighlightBrush">#33B0B0B0</Color>
+        <Color x:Key="HeaderBackgroundBrush">#2E2E2E</Color>
+        <Color x:Key="HeaderForegroundBrush">#FFFFFF</Color>
+        <Color x:Key="CheckboxStrokeBrush">#A0A0A0</Color>
+        <Color x:Key="CheckboxFillBrush">#2E2E2E</Color>
+        <Color x:Key="BorderColor">#A0A0A0</Color>
+        <Color x:Key="GridLineColor">#D0D0D0</Color>
+        <Color x:Key="DividerColor">#D0D0D0</Color>
+        <x:Double x:Key="BorderThickness">1</x:Double>
+        <x:Double x:Key="DividerThickness">1</x:Double>
+        <x:Double x:Key="CornerRadius">6</x:Double>
+        <Color x:Key="ButtonTextOnAccent">#1A1A1A</Color>
+        <Color x:Key="ButtonTextOnInk">#FFFFFF</Color>
+        <x:String x:Key="HeaderPatternStyle">Banded</x:String>
+        <x:Double x:Key="HeaderPatternOpacity">0.10</x:Double>
+        <x:Double x:Key="PatternStripeWidth">14</x:Double>
+        <x:Double x:Key="PatternAngle">0</x:Double>
+        <x:Double x:Key="SpacingXs">4</x:Double>
+        <x:Double x:Key="SpacingSm">8</x:Double>
+        <x:Double x:Key="SpacingMd">12</x:Double>
+        <x:Double x:Key="SpacingLg">16</x:Double>
+        <x:Double x:Key="SpacingXl">24</x:Double>
+        <x:Double x:Key="RadiusSmall">3</x:Double>
+        <x:Double x:Key="RadiusMedium">6</x:Double>
+        <x:Double x:Key="RadiusLarge">10</x:Double>
+        <x:Double x:Key="GridLineOpacity">0.30</x:Double>
+        <x:String x:Key="GridMode">Technical</x:String>
+        <OnPlatform x:Key="ThemeHeaderFont"
+                    x:TypeArguments="x:String">
+                <On Platform="iOS,MacCatalyst"
+                    Value="SFProRounded-Medium"/>
+                <On Platform="Android,WinUI"
+                    Value="Roboto"/>
+        </OnPlatform>
+        <OnPlatform x:Key="ThemeDateNumberFont"
+                    x:TypeArguments="x:String">
+                <On Platform="iOS,MacCatalyst"
+                    Value="SFProRounded-Medium"/>
+                <On Platform="Android,WinUI"
+                    Value="Roboto"/>
+        </OnPlatform>
+        <x:String x:Key="ThemeDateDayFont">Roboto</x:String>
 
 </ResourceDictionary>
