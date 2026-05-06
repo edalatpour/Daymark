@@ -29,28 +29,46 @@
                    HorizontalTextAlignment="Start"
                    VerticalOptions="Start"/>
 
-            <VerticalStackLayout Grid.Column="1"
-                                 Spacing="0"
-                                 HorizontalOptions="End"
-                                 VerticalOptions="Start">
-                <VerticalStackLayout.GestureRecognizers>
+            <Grid Grid.Column="1"
+                  RowDefinitions="Auto,Auto"
+                  RowSpacing="4"
+                  HorizontalOptions="End"
+                  VerticalOptions="Start">
+                <Grid.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnDateTapped"/>
-                </VerticalStackLayout.GestureRecognizers>
-                <Label Text="{Binding HeaderPrimaryText}"
-                       Style="{DynamicResource DateNumber}"
-                       LineBreakMode="TailTruncation"
-                       MaxLines="1"
-                       HorizontalOptions="Fill"
-                       HorizontalTextAlignment="End"/>
-                <Label Text="{Binding HeaderSecondaryText}"
-                       IsVisible="{Binding ShowDateHeaderDetails}"
-                       Style="{DynamicResource DateText}"
-                       HorizontalTextAlignment="End"/>
-                <Label Text="{Binding HeaderTertiaryText}"
-                       IsVisible="{Binding ShowDateHeaderDetails}"
-                       Style="{DynamicResource DateText}"
-                       HorizontalTextAlignment="End"/>
-            </VerticalStackLayout>
+                </Grid.GestureRecognizers>
+
+                <Grid Grid.Row="0"
+                      WidthRequest="220"
+                      HeightRequest="72">
+                    <Border Style="{DynamicResource DaymarkHeaderBand}"/>
+
+                    <Border Margin="0,8,10,8"
+                            WidthRequest="84"
+                            HorizontalOptions="End"
+                            Style="{DynamicResource DaymarkDateBadge}">
+                        <Label Text="{Binding HeaderPrimaryText}"
+                               Style="{DynamicResource DaymarkDateNumber}"
+                               LineBreakMode="NoWrap"
+                               MaxLines="1"/>
+                    </Border>
+
+                    <BoxView Style="{DynamicResource DaymarkHeaderRule}"/>
+                </Grid>
+
+                <VerticalStackLayout Grid.Row="1"
+                                     Spacing="0"
+                                     Padding="0,0,2,0">
+                    <Label Text="{Binding HeaderSecondaryText}"
+                           IsVisible="{Binding ShowDateHeaderDetails}"
+                           Style="{DynamicResource DaymarkDateMeta}"
+                           HorizontalTextAlignment="End"/>
+                    <Label Text="{Binding HeaderTertiaryText}"
+                           IsVisible="{Binding ShowDateHeaderDetails}"
+                           Style="{DynamicResource DaymarkDateMeta}"
+                           HorizontalTextAlignment="End"/>
+                </VerticalStackLayout>
+            </Grid>
         </Grid>
 
         <!-- Section Titles -->
