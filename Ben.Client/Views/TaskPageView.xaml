@@ -57,7 +57,7 @@
                     <TapGestureRecognizer Tapped="OnCatchUpClicked"/>
                 </Border.GestureRecognizers>
                 <Label x:Name="CatchUpLabel"
-                       Text="⬇︎"
+                       Text="▼"
                        Style="{StaticResource SectionTitle}"
                        FontAttributes="Bold"
                        HorizontalOptions="Center"
@@ -65,7 +65,7 @@
                        HorizontalTextAlignment="Center"
                        VerticalTextAlignment="Center"/>
             </Border>
-            <Label Text="Abc"
+            <Label Text="❖"
                    Grid.Column="1"
                    Style="{StaticResource SectionTitle}"
                    VerticalOptions="Center"

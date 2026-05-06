@@ -11,7 +11,7 @@
   <mp:PhoneIdentity PhoneProductId="9b95dfd7-e510-403d-88a7-44d548292448" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Ben Planner</DisplayName>
+    <DisplayName>Daymark</DisplayName>
     <PublisherDisplayName>Tim Edalatpour</PublisherDisplayName>
     <Logo>$placeholder$.png</Logo>
   </Properties>
@@ -28,7 +28,7 @@
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="Ben Planner"
+        DisplayName="Daymark"
         Description="A modern daily planner built on the proven Franklin planning method. Capture tasks, prioritize your day, link notes to actions, and carry forward unfinished items with purpose."
         Square150x150Logo="$placeholder$.png"
         Square44x44Logo="$placeholder$.png"

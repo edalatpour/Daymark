@@ -25,7 +25,7 @@
 		<PublishReadyToRun>false</PublishReadyToRun>
 
 		<!-- Display name -->
-		<ApplicationTitle>Ben</ApplicationTitle>
+		<ApplicationTitle>Daymark</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.edalatpour.ben</ApplicationId>
@@ -124,12 +124,12 @@
 	<ItemGroup>
 		<!-- App Icon -->
 		<!-- <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" /> -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\b.png" Color="#1F4E4B" />
+		<MauiIcon Include="Resources\AppIcon\hatteras_appicon_ios.png" Color="Navy" Resize="True" BaseSize="1024,1024" />
 
 		<!-- Splash Screen -->
 		<!-- <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
 		<!-- <MauiSplashScreen Include="Resources\AppIcon\b.png" Color="#1F4E4B" /> -->
-		<MauiSplashScreen Include="Resources\Splash\signature.png" Color="#1F4E4B" BaseSize="384,384" />
+		<MauiSplashScreen Include="Resources\Splash\hatteras_splash_ios.png" Color="Navy" BaseSize="384,384" />
 		
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
