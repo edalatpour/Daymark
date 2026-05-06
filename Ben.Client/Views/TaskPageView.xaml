@@ -7,9 +7,9 @@
              x:Class="Ben.Views.TaskPageView"
              x:DataType="viewModels:DailyViewModel">
 
-    <Grid Padding="16"
+    <Grid Padding="{DynamicResource SpacingLg}"
           RowDefinitions="Auto,Auto,*"
-          RowSpacing="8">
+          RowSpacing="{DynamicResource SpacingSm}">
 
         <!-- Date Header -->
 
@@ -40,7 +40,7 @@
         <Grid Grid.Row="1"
               ColumnDefinitions="36,34,*"
               ColumnSpacing="10"
-              Padding="0,4,0,0">
+              Padding="{DynamicResource SectionHeaderPadding}">
             <Border Grid.Column="0"
                     Margin="0"
                     HeightRequest="32"
@@ -48,8 +48,8 @@
                     IsVisible="{Binding ShowDateHeaderDetails}"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
-                    Stroke="{DynamicResource Ink}"
-                    StrokeThickness="3">
+                    Stroke="{DynamicResource BorderColor}"
+                    StrokeThickness="{DynamicResource BorderThickness}">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="999"/>
                 </Border.StrokeShape>
@@ -72,7 +72,7 @@
                    HorizontalTextAlignment="Center"/>
             <Label Text="Tasks"
                    Grid.Column="2"
-                   Style="{StaticResource SectionTitle}"
+                   Style="{StaticResource LabelTitle}"
                    VerticalOptions="Center"
                    HorizontalTextAlignment="Center"/>
         </Grid>
@@ -90,11 +90,9 @@
             </Grid.ColumnDefinitions>
 
             <BoxView Grid.ColumnSpan="2"
-                     HeightRequest="3"
-                     BackgroundColor="{DynamicResource Ink}"/>
+                     Style="{StaticResource DividerStrong}"/>
             <BoxView Grid.RowSpan="2"
-                     WidthRequest="1"
-                     BackgroundColor="{DynamicResource Ink}"/>
+                     Style="{StaticResource GridLineStrong}"/>
 
             <Grid Grid.Row="1"
                   Grid.Column="1"
@@ -140,8 +138,7 @@
                                                FontAttributes="Bold"/>
 
                                         <BoxView Grid.Column="1"
-                                                 WidthRequest="1"
-                                                 BackgroundColor="{DynamicResource Line}"/>
+                                                 Style="{StaticResource GridLineSoft}"/>
                                         <Label Grid.Column="2"
                                                Margin="{OnPlatform iOS='-5,0,-5,3', Default='-5,0,-5,3'}"
                                                Padding="0"
@@ -150,8 +147,7 @@
                                                VerticalTextAlignment="Start"
                                                Style="{StaticResource Handwriting}"/>
                                         <BoxView Grid.Column="3"
-                                                 WidthRequest="1"
-                                                 BackgroundColor="{DynamicResource Line}"/>
+                                                 Style="{StaticResource GridLineSoft}"/>
                                         <Label Grid.Column="4"
                                                Margin="{OnPlatform iOS='0,0,0,3', Default='0,0,0,3'}"
                                                Padding="0"
@@ -171,8 +167,7 @@
                                         </Label>
                                         <BoxView Grid.Row="1"
                                                  Grid.ColumnSpan="5"
-                                                 HeightRequest="1"
-                                                 BackgroundColor="{DynamicResource Line}"
+                                                 Style="{StaticResource DividerSoft}"
                                                  VerticalOptions="End"/>
                                     </Grid>
                                 </ContentView>
@@ -191,8 +186,7 @@
                     </Grid.GestureRecognizers>
                     <BoxView Grid.Row="0"
                              Grid.ColumnSpan="5"
-                             HeightRequest="1"
-                             BackgroundColor="{DynamicResource Line}"/>
+                             Style="{StaticResource DividerSoft}"/>
                     <Image Grid.Row="1"
                            Grid.Column="0"
                            Source="plus.webp"
@@ -203,12 +197,10 @@
                            VerticalOptions="Center"/>
                     <BoxView Grid.Row="1"
                              Grid.Column="1"
-                             WidthRequest="1"
-                             BackgroundColor="{DynamicResource Line}"/>
+                             Style="{StaticResource GridLineSoft}"/>
                     <BoxView Grid.Row="1"
                              Grid.Column="3"
-                             WidthRequest="1"
-                             BackgroundColor="{DynamicResource Line}"/>
+                             Style="{StaticResource GridLineSoft}"/>
                     <Label Grid.Row="1"
                            Grid.Column="4"
                            Text="New task..."
@@ -221,8 +213,7 @@
 
             <BoxView Grid.Row="1"
                      Grid.ColumnSpan="2"
-                     HeightRequest="1"
-                     BackgroundColor="{DynamicResource Ink}"
+                     Style="{StaticResource DividerStrong}"
                      VerticalOptions="End"/>
         </Grid>
 
