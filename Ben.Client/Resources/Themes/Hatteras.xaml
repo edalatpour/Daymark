@@ -38,9 +38,9 @@
     <Color x:Key="ButtonTextOnAccent">#FFFFFF</Color>
     <Color x:Key="ButtonTextOnInk">#FFFFFF</Color>
     <x:String x:Key="HeaderPatternStyle">SpiralHint</x:String>
-    <x:Double x:Key="HeaderPatternOpacity">0.10</x:Double>
-    <x:Double x:Key="PatternStripeWidth">10</x:Double>
-    <x:Double x:Key="PatternAngle">28</x:Double>
+    <x:Double x:Key="HeaderPatternOpacity">0.18</x:Double>
+    <x:Double x:Key="PatternStripeWidth">12</x:Double>
+    <x:Double x:Key="PatternAngle">22</x:Double>
     <x:Double x:Key="SpacingXs">4</x:Double>
     <x:Double x:Key="SpacingSm">8</x:Double>
     <x:Double x:Key="SpacingMd">12</x:Double>

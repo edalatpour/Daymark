@@ -26,6 +26,42 @@
                   HeightRequest="72">
                 <Border Style="{DynamicResource DaymarkHeaderBand}"/>
 
+                <Grid InputTransparent="True"
+                      Margin="0,4,0,4">
+                    <BoxView Style="{DynamicResource HeaderPatternStripe}"
+                             HeightRequest="{DynamicResource PatternStripeWidth}"
+                             Rotation="{DynamicResource PatternAngle}"
+                             VerticalOptions="Start"
+                             Margin="0,10,0,0"/>
+                    <BoxView Style="{DynamicResource HeaderPatternStripe}"
+                             HeightRequest="{DynamicResource PatternStripeWidth}"
+                             Rotation="{DynamicResource PatternAngle}"
+                             VerticalOptions="Center"/>
+                    <BoxView Style="{DynamicResource HeaderPatternStripe}"
+                             HeightRequest="{DynamicResource PatternStripeWidth}"
+                             Rotation="{DynamicResource PatternAngle}"
+                             VerticalOptions="End"
+                             Margin="0,0,0,10"/>
+
+                    <BoxView Style="{DynamicResource HeaderPatternStripe}"
+                             HeightRequest="{DynamicResource PatternStripeWidth}"
+                             Rotation="{DynamicResource PatternSecondaryAngle}"
+                             Opacity="{DynamicResource PatternSecondaryOpacity}"
+                             VerticalOptions="Start"
+                             Margin="0,10,0,0"/>
+                    <BoxView Style="{DynamicResource HeaderPatternStripe}"
+                             HeightRequest="{DynamicResource PatternStripeWidth}"
+                             Rotation="{DynamicResource PatternSecondaryAngle}"
+                             Opacity="{DynamicResource PatternSecondaryOpacity}"
+                             VerticalOptions="Center"/>
+                    <BoxView Style="{DynamicResource HeaderPatternStripe}"
+                             HeightRequest="{DynamicResource PatternStripeWidth}"
+                             Rotation="{DynamicResource PatternSecondaryAngle}"
+                             Opacity="{DynamicResource PatternSecondaryOpacity}"
+                             VerticalOptions="End"
+                             Margin="0,0,0,10"/>
+                </Grid>
+
                 <Border Margin="10,8,0,8"
                         WidthRequest="84"
                         HorizontalOptions="Start"

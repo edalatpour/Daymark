@@ -12,8 +12,8 @@
     <Color x:Key="Ink">#1A1A1A</Color>
     <Color x:Key="Line">#CFCFCF</Color>
 
-    <Color x:Key="Accent">#333333</Color>
-    <Color x:Key="Link">#000000</Color>
+    <Color x:Key="Accent">#B22222</Color>
+    <Color x:Key="Link">#B22222</Color>
 
     <Color x:Key="UserText">#000000</Color>
 
@@ -22,9 +22,9 @@
     <Color x:Key="InkBrush">#1A1A1A</Color>
     <Color x:Key="SecondaryInkBrush">#767676</Color>
     <Color x:Key="GlyphBrush">#000000</Color>
-    <Color x:Key="AccentBrush">#333333</Color>
-    <Color x:Key="SelectionBrush">#80333333</Color>
-    <Color x:Key="HighlightBrush">#33333333</Color>
+    <Color x:Key="AccentBrush">#B22222</Color>
+    <Color x:Key="SelectionBrush">#80B22222</Color>
+    <Color x:Key="HighlightBrush">#33B22222</Color>
     <Color x:Key="HeaderBackgroundBrush">#000000</Color>
     <Color x:Key="HeaderForegroundBrush">#FFFFFF</Color>
     <Color x:Key="CheckboxStrokeBrush">#333333</Color>
@@ -38,9 +38,11 @@
     <Color x:Key="ButtonTextOnAccent">#FFFFFF</Color>
     <Color x:Key="ButtonTextOnInk">#FFFFFF</Color>
     <x:String x:Key="HeaderPatternStyle">Diamond</x:String>
-    <x:Double x:Key="HeaderPatternOpacity">0.09</x:Double>
-    <x:Double x:Key="PatternStripeWidth">12</x:Double>
+    <x:Double x:Key="HeaderPatternOpacity">0.16</x:Double>
+    <x:Double x:Key="PatternStripeWidth">10</x:Double>
     <x:Double x:Key="PatternAngle">45</x:Double>
+    <x:Double x:Key="PatternSecondaryOpacity">0.16</x:Double>
+    <x:Double x:Key="PatternSecondaryAngle">-45</x:Double>
     <x:Double x:Key="SpacingXs">4</x:Double>
     <x:Double x:Key="SpacingSm">8</x:Double>
     <x:Double x:Key="SpacingMd">12</x:Double>
