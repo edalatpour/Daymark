@@ -21,7 +21,7 @@
             <Label Grid.Column="0"
                    Text="{Binding DailyQuote}"
                    IsVisible="{Binding ShowDailyQuote}"
-                   Style="{StaticResource DateText}"
+                   Style="{DynamicResource DateText}"
                    FontSize="12"
                    MaxLines="7"
                    LineBreakMode="WordWrap"
@@ -37,18 +37,18 @@
                     <TapGestureRecognizer Tapped="OnDateTapped"/>
                 </VerticalStackLayout.GestureRecognizers>
                 <Label Text="{Binding HeaderPrimaryText}"
-                       Style="{StaticResource DateNumber}"
+                       Style="{DynamicResource DateNumber}"
                        LineBreakMode="TailTruncation"
                        MaxLines="1"
                        HorizontalOptions="Fill"
                        HorizontalTextAlignment="End"/>
                 <Label Text="{Binding HeaderSecondaryText}"
                        IsVisible="{Binding ShowDateHeaderDetails}"
-                       Style="{StaticResource DateText}"
+                       Style="{DynamicResource DateText}"
                        HorizontalTextAlignment="End"/>
                 <Label Text="{Binding HeaderTertiaryText}"
                        IsVisible="{Binding ShowDateHeaderDetails}"
-                       Style="{StaticResource DateText}"
+                       Style="{DynamicResource DateText}"
                        HorizontalTextAlignment="End"/>
             </VerticalStackLayout>
         </Grid>
@@ -61,7 +61,7 @@
               Padding="{DynamicResource SectionHeaderPadding}">
             <Label Grid.Column="1"
                    Text="Notes"
-                   Style="{StaticResource LabelTitle}"
+                   Style="{DynamicResource SectionTitle}"
                    VerticalOptions="Center"
                    HorizontalTextAlignment="Center"/>
             <Border Grid.Column="2"
@@ -98,9 +98,9 @@
             </Grid.ColumnDefinitions>
 
             <BoxView Grid.ColumnSpan="2"
-                     Style="{StaticResource DividerStrong}"/>
+                     Style="{DynamicResource DividerStrong}"/>
             <BoxView Grid.RowSpan="2"
-                     Style="{StaticResource GridLineStrong}"/>
+                     Style="{DynamicResource GridLineStrong}"/>
 
             <Grid Grid.Row="1"
                   Grid.Column="1"
@@ -136,7 +136,7 @@
                                                VerticalTextAlignment="Start"
                                                Style="{StaticResource Handwriting}"/>
                                         <BoxView Grid.Column="1"
-                                                 Style="{StaticResource GridLineSoft}"
+                                                 Style="{DynamicResource GridLineSoft}"
                                                  HorizontalOptions="Center"
                                                  VerticalOptions="Fill"/>
                                         <Label Grid.Column="2"
@@ -148,7 +148,7 @@
                                                Style="{StaticResource Handwriting}"/>
                                         <BoxView Grid.Row="1"
                                                  Grid.ColumnSpan="3"
-                                                 Style="{StaticResource DividerSoft}"
+                                                 Style="{DynamicResource DividerSoft}"
                                                  VerticalOptions="End"/>
                                     </Grid>
                                 </ContentView>
@@ -167,7 +167,7 @@
                     </Grid.GestureRecognizers>
                     <BoxView Grid.Row="0"
                              Grid.ColumnSpan="3"
-                             Style="{StaticResource DividerSoft}"/>
+                             Style="{DynamicResource DividerSoft}"/>
                     <Image Grid.Row="1"
                            Grid.Column="0"
                            Source="plus.webp"
@@ -178,7 +178,7 @@
                            VerticalOptions="Center"/>
                     <BoxView Grid.Row="1"
                              Grid.Column="1"
-                             Style="{StaticResource GridLineSoft}"
+                             Style="{DynamicResource GridLineSoft}"
                              HorizontalOptions="Center"
                              VerticalOptions="Fill"/>
                     <Label Grid.Row="1"
@@ -194,7 +194,7 @@
 
             <BoxView Grid.Row="1"
                      Grid.ColumnSpan="2"
-                     Style="{StaticResource DividerStrong}"
+                     Style="{DynamicResource DividerStrong}"
                      VerticalOptions="End"/>
         </Grid>
     </Grid>

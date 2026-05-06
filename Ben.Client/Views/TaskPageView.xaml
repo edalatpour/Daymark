@@ -20,18 +20,18 @@
                 <TapGestureRecognizer Tapped="OnDateTapped"/>
             </VerticalStackLayout.GestureRecognizers>
             <Label Text="{Binding HeaderPrimaryText}"
-                   Style="{StaticResource DateNumber}"
+                   Style="{DynamicResource DateNumber}"
                    LineBreakMode="TailTruncation"
                    MaxLines="1"
                    HorizontalOptions="Fill"
                    HorizontalTextAlignment="Start"/>
             <Label Text="{Binding HeaderSecondaryText}"
                    IsVisible="{Binding ShowDateHeaderDetails}"
-                   Style="{StaticResource DateText}"
+                   Style="{DynamicResource DateText}"
                    HorizontalTextAlignment="Start"/>
             <Label Text="{Binding HeaderTertiaryText}"
                    IsVisible="{Binding ShowDateHeaderDetails}"
-                   Style="{StaticResource DateText}"
+                   Style="{DynamicResource DateText}"
                    HorizontalTextAlignment="Start"/>
         </VerticalStackLayout>
 
@@ -72,7 +72,7 @@
                    HorizontalTextAlignment="Center"/>
             <Label Text="Tasks"
                    Grid.Column="2"
-                   Style="{StaticResource LabelTitle}"
+                   Style="{DynamicResource SectionTitle}"
                    VerticalOptions="Center"
                    HorizontalTextAlignment="Center"/>
         </Grid>
@@ -90,9 +90,9 @@
             </Grid.ColumnDefinitions>
 
             <BoxView Grid.ColumnSpan="2"
-                     Style="{StaticResource DividerStrong}"/>
+                     Style="{DynamicResource DividerStrong}"/>
             <BoxView Grid.RowSpan="2"
-                     Style="{StaticResource GridLineStrong}"/>
+                     Style="{DynamicResource GridLineStrong}"/>
 
             <Grid Grid.Row="1"
                   Grid.Column="1"
@@ -138,7 +138,7 @@
                                                FontAttributes="Bold"/>
 
                                         <BoxView Grid.Column="1"
-                                                 Style="{StaticResource GridLineSoft}"/>
+                                                 Style="{DynamicResource GridLineSoft}"/>
                                         <Label Grid.Column="2"
                                                Margin="{OnPlatform iOS='-5,0,-5,3', Default='-5,0,-5,3'}"
                                                Padding="0"
@@ -147,7 +147,7 @@
                                                VerticalTextAlignment="Start"
                                                Style="{StaticResource Handwriting}"/>
                                         <BoxView Grid.Column="3"
-                                                 Style="{StaticResource GridLineSoft}"/>
+                                                 Style="{DynamicResource GridLineSoft}"/>
                                         <Label Grid.Column="4"
                                                Margin="{OnPlatform iOS='0,0,0,3', Default='0,0,0,3'}"
                                                Padding="0"
@@ -167,7 +167,7 @@
                                         </Label>
                                         <BoxView Grid.Row="1"
                                                  Grid.ColumnSpan="5"
-                                                 Style="{StaticResource DividerSoft}"
+                                                 Style="{DynamicResource DividerSoft}"
                                                  VerticalOptions="End"/>
                                     </Grid>
                                 </ContentView>
@@ -186,7 +186,7 @@
                     </Grid.GestureRecognizers>
                     <BoxView Grid.Row="0"
                              Grid.ColumnSpan="5"
-                             Style="{StaticResource DividerSoft}"/>
+                             Style="{DynamicResource DividerSoft}"/>
                     <Image Grid.Row="1"
                            Grid.Column="0"
                            Source="plus.webp"
@@ -197,10 +197,10 @@
                            VerticalOptions="Center"/>
                     <BoxView Grid.Row="1"
                              Grid.Column="1"
-                             Style="{StaticResource GridLineSoft}"/>
+                             Style="{DynamicResource GridLineSoft}"/>
                     <BoxView Grid.Row="1"
                              Grid.Column="3"
-                             Style="{StaticResource GridLineSoft}"/>
+                             Style="{DynamicResource GridLineSoft}"/>
                     <Label Grid.Row="1"
                            Grid.Column="4"
                            Text="New task..."
@@ -213,7 +213,7 @@
 
             <BoxView Grid.Row="1"
                      Grid.ColumnSpan="2"
-                     Style="{StaticResource DividerStrong}"
+                     Style="{DynamicResource DividerStrong}"
                      VerticalOptions="End"/>
         </Grid>
 

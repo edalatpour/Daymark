@@ -252,6 +252,23 @@
                         Value="44"/>
                 <Setter Property="Padding"
                         Value="12,8"/>
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                        <VisualStateGroupList>
+                                <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal"/>
+                                        <VisualState x:Name="Disabled">
+                                                <VisualState.Setters>
+                                                        <Setter Property="BackgroundColor"
+                                                                Value="{DynamicResource Accent}"/>
+                                                        <Setter Property="TextColor"
+                                                                Value="{DynamicResource ButtonTextOnAccent}"/>
+                                                        <Setter Property="Opacity"
+                                                                Value="0.60"/>
+                                                </VisualState.Setters>
+                                        </VisualState>
+                                </VisualStateGroup>
+                        </VisualStateGroupList>
+                </Setter>
         </Style>
 
         <Style x:Key="SecondaryActionButton"
@@ -264,6 +281,23 @@
                         Value="44"/>
                 <Setter Property="Padding"
                         Value="12,8"/>
+                <Setter Property="VisualStateManager.VisualStateGroups">
+                        <VisualStateGroupList>
+                                <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal"/>
+                                        <VisualState x:Name="Disabled">
+                                                <VisualState.Setters>
+                                                        <Setter Property="BackgroundColor"
+                                                                Value="{DynamicResource Ink}"/>
+                                                        <Setter Property="TextColor"
+                                                                Value="{DynamicResource ButtonTextOnInk}"/>
+                                                        <Setter Property="Opacity"
+                                                                Value="0.60"/>
+                                                </VisualState.Setters>
+                                        </VisualState>
+                                </VisualStateGroup>
+                        </VisualStateGroupList>
+                </Setter>
         </Style>
 
         <Style x:Key="GhostActionButton"

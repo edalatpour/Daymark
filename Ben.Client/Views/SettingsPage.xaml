@@ -13,10 +13,10 @@
 
     <Grid Style="{DynamicResource PaperRootGrid}">
 
-        <Grid Padding="16"
+        <Grid Padding="{DynamicResource SpacingLg}"
               HorizontalOptions="Fill"
               RowDefinitions="Auto,Auto,*,Auto"
-              RowSpacing="12">
+              RowSpacing="{DynamicResource SpacingMd}">
 
             <!-- Header -->
             <Label Grid.Row="0"
@@ -37,11 +37,9 @@
                 </Grid.ColumnDefinitions>
 
                 <BoxView Grid.ColumnSpan="2"
-                         HeightRequest="3"
-                         BackgroundColor="{DynamicResource Ink}"/>
+                         Style="{DynamicResource DividerStrong}"/>
                 <BoxView Grid.RowSpan="3"
-                         WidthRequest="1"
-                         BackgroundColor="{DynamicResource Ink}"/>
+                         Style="{DynamicResource GridLineStrong}"/>
 
                 <ScrollView Grid.Row="1"
                             Grid.Column="1"
@@ -49,21 +47,21 @@
                             VerticalOptions="Fill">
 
                     <Grid BackgroundColor="{DynamicResource WritingPaper}"
-                          Padding="16"
+                          Padding="{DynamicResource SpacingLg}"
                           RowDefinitions="Auto,Auto,Auto,Auto"
-                          RowSpacing="16">
+                          RowSpacing="{DynamicResource SpacingLg}">
 
                         <!-- Authentication -->
                         <StackLayout Grid.Row="0"
-                                     Spacing="8"
-                                     Padding="4,0,4,4">
+                                     Spacing="{DynamicResource SpacingSm}"
+                                     Padding="{DynamicResource SectionHeaderPadding}">
 
                             <!-- Authenticated state: user avatar + email/name (tap = sign out) -->
                             <Grid IsVisible="{Binding AuthViewModel.IsAuthenticated}"
                                   ColumnDefinitions="Auto,*"
                                   RowDefinitions="Auto,Auto"
-                                  ColumnSpacing="8"
-                                  RowSpacing="4"
+                                  ColumnSpacing="{DynamicResource SpacingSm}"
+                                  RowSpacing="{DynamicResource SpacingXs}"
                                   HorizontalOptions="Fill">
 
                                 <Grid Grid.Column="0"
@@ -104,9 +102,7 @@
                                 <Button Grid.Row="1"
                                         Grid.ColumnSpan="2"
                                         Text="Sign out"
-                                        BackgroundColor="{DynamicResource WritingPaper}"
-                                        TextColor="{DynamicResource Ink}"
-                                        CornerRadius="4"
+                                        Style="{DynamicResource GhostActionButton}"
                                         Clicked="OnSignOutTapped"/>
 
                             </Grid>
@@ -118,7 +114,7 @@
 
                             <VerticalStackLayout
                                 IsVisible="{Binding AuthViewModel.IsAuthenticated, Converter={StaticResource InvertedBoolConverter}}"
-                                Spacing="12">
+                                Spacing="{DynamicResource SpacingMd}">
 
                                 <!-- Sign in with Apple (External ID flow) -->
                                 <Image Source="signin_with_apple.png"
@@ -150,12 +146,11 @@
                         <!-- Theme Selection -->
                         <Grid Grid.Row="1"
                               ColumnDefinitions="Auto,*"
-                              ColumnSpacing="8"
-                              Padding="4,0,4,0">
+                              ColumnSpacing="{DynamicResource SpacingSm}"
+                              Padding="{DynamicResource SectionHeaderPadding}">
                             <Label Grid.Column="0"
                                    Text="Theme"
-                                   FontSize="14"
-                                   TextColor="{DynamicResource Ink}"
+                                   Style="{DynamicResource LabelSection}"
                                    VerticalOptions="Center"
                                    HorizontalOptions="Start"/>
 
@@ -175,12 +170,11 @@
                         <!-- User Font Selection -->
                         <Grid Grid.Row="2"
                               ColumnDefinitions="Auto,*"
-                              ColumnSpacing="8"
-                              Padding="4,0,4,0">
+                              ColumnSpacing="{DynamicResource SpacingSm}"
+                              Padding="{DynamicResource SectionHeaderPadding}">
                             <Label Grid.Column="0"
                                    Text="User Font"
-                                   FontSize="14"
-                                   TextColor="{DynamicResource Ink}"
+                                   Style="{DynamicResource LabelSection}"
                                    VerticalOptions="Center"
                                    HorizontalOptions="Start"/>
 
@@ -203,7 +197,7 @@
                                TextColor="{DynamicResource Link}"
                                TextDecorations="Underline"
                                HorizontalOptions="Center"
-                               Padding="4,0,4,0">
+                               Padding="{DynamicResource SectionHeaderPadding}">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnHelpTapped"/>
                             </Label.GestureRecognizers>
@@ -215,30 +209,23 @@
 
                 <BoxView Grid.Row="2"
                          Grid.ColumnSpan="2"
-                         HeightRequest="1"
-                         BackgroundColor="{DynamicResource Ink}"/>
+                         Style="{DynamicResource DividerStrong}"/>
 
             </Grid>
 
             <!-- Action buttons -->
             <Grid Grid.Row="3"
                   ColumnDefinitions="*,*"
-                  ColumnSpacing="12"
-                  Margin="0,16,0,0">
+                  ColumnSpacing="{DynamicResource SpacingMd}"
+                  Margin="{DynamicResource FooterTopMargin}">
 
                 <Button Grid.Column="0"
                         Text="Cancel"
-                        BackgroundColor="{DynamicResource Ink}"
-                        TextColor="{DynamicResource WritingPaper}"
-                        CornerRadius="4"
-                        HeightRequest="44"
+                        Style="{DynamicResource SecondaryActionButton}"
                         Clicked="OnCancelClicked"/>
                 <Button Grid.Column="1"
                         Text="Save"
-                        BackgroundColor="{DynamicResource Accent}"
-                        TextColor="{DynamicResource WritingPaper}"
-                        CornerRadius="4"
-                        HeightRequest="44"
+                        Style="{DynamicResource PrimaryActionButton}"
                         Clicked="OnSaveClicked"/>
 
             </Grid>

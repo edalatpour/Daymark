@@ -8,14 +8,14 @@
              Title="Search Notes">
 
     <Grid Style="{DynamicResource PaperRootGrid}">
-        <Grid Padding="16"
+        <Grid Padding="{DynamicResource SpacingLg}"
               HorizontalOptions="Fill"
               RowDefinitions="Auto,*,Auto"
-              RowSpacing="12">
+              RowSpacing="{DynamicResource SpacingMd}">
 
             <Label Grid.Row="0"
                    Text="Search Notes"
-                   Style="{StaticResource SectionTitle}"
+                   Style="{DynamicResource SectionTitle}"
                    HorizontalTextAlignment="Center"/>
 
             <Grid Grid.Row="1">
@@ -30,11 +30,9 @@
                 </Grid.ColumnDefinitions>
 
                 <BoxView Grid.ColumnSpan="2"
-                         HeightRequest="3"
-                         BackgroundColor="{DynamicResource Ink}"/>
+                         Style="{DynamicResource DividerStrong}"/>
                 <BoxView Grid.RowSpan="3"
-                         WidthRequest="1"
-                         BackgroundColor="{DynamicResource Ink}"/>
+                         Style="{DynamicResource GridLineStrong}"/>
 
                 <Grid Grid.Row="1"
                       Grid.Column="1"
@@ -63,8 +61,7 @@
                                                    FormattedText="{Binding RowText}"/>
                                             <BoxView Grid.Row="2"
                                                      Grid.ColumnSpan="1"
-                                                     HeightRequest="1"
-                                                     BackgroundColor="{DynamicResource Line}"
+                                                     Style="{DynamicResource DividerSoft}"
                                                      VerticalOptions="End"/>
                                         </Grid>
                                     </ContentView>
@@ -76,14 +73,13 @@
 
                 <BoxView Grid.Row="2"
                          Grid.ColumnSpan="2"
-                         HeightRequest="1"
-                         BackgroundColor="{DynamicResource Ink}"/>
+                         Style="{DynamicResource DividerStrong}"/>
             </Grid>
 
             <Grid Grid.Row="2"
                   RowDefinitions="Auto,Auto"
                   RowSpacing="0"
-                  Margin="0,16,0,0">
+                  Margin="{DynamicResource FooterTopMargin}">
                 <Grid Grid.Row="0"
                       ColumnDefinitions="*"
                       ColumnSpacing="12">
@@ -101,14 +97,11 @@
 
                 <Grid Grid.Row="1"
                       ColumnDefinitions="*"
-                      ColumnSpacing="12">
+                      ColumnSpacing="{DynamicResource SpacingMd}">
                     <Button Grid.Column="0"
                             Text="Close"
                             Clicked="OnCancelClicked"
-                            BackgroundColor="{DynamicResource Ink}"
-                            TextColor="{DynamicResource WritingPaper}"
-                            CornerRadius="4"
-                            HeightRequest="44"/>
+                            Style="{DynamicResource SecondaryActionButton}"/>
                 </Grid>
             </Grid>
         </Grid>
