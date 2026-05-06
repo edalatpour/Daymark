@@ -13,32 +13,50 @@
 
         <!-- Date Header -->
 
-        <VerticalStackLayout Spacing="0"
-                             HorizontalOptions="Start"
-                             VerticalOptions="Start">
-            <VerticalStackLayout.GestureRecognizers>
+        <Grid RowDefinitions="Auto,Auto"
+              RowSpacing="4"
+              HorizontalOptions="Start"
+              VerticalOptions="Start">
+            <Grid.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnDateTapped"/>
-            </VerticalStackLayout.GestureRecognizers>
-            <Label Text="{Binding HeaderPrimaryText}"
-                   Style="{DynamicResource DateNumber}"
-                   LineBreakMode="TailTruncation"
-                   MaxLines="1"
-                   HorizontalOptions="Fill"
-                   HorizontalTextAlignment="Start"/>
-            <Label Text="{Binding HeaderSecondaryText}"
-                   IsVisible="{Binding ShowDateHeaderDetails}"
-                   Style="{DynamicResource DateText}"
-                   HorizontalTextAlignment="Start"/>
-            <Label Text="{Binding HeaderTertiaryText}"
-                   IsVisible="{Binding ShowDateHeaderDetails}"
-                   Style="{DynamicResource DateText}"
-                   HorizontalTextAlignment="Start"/>
-        </VerticalStackLayout>
+            </Grid.GestureRecognizers>
+
+            <Grid Grid.Row="0"
+                  WidthRequest="220"
+                  HeightRequest="72">
+                <Border Style="{DynamicResource DaymarkHeaderBand}"/>
+
+                <Border Margin="10,8,0,8"
+                        WidthRequest="84"
+                        HorizontalOptions="Start"
+                        Style="{DynamicResource DaymarkDateBadge}">
+                    <Label Text="{Binding HeaderPrimaryText}"
+                           Style="{DynamicResource DaymarkDateNumber}"
+                           LineBreakMode="NoWrap"
+                           MaxLines="1"/>
+                </Border>
+
+                <BoxView Style="{DynamicResource DaymarkHeaderRule}"/>
+            </Grid>
+
+            <VerticalStackLayout Grid.Row="1"
+                                 Spacing="0"
+                                 Padding="2,0,0,0">
+                <Label Text="{Binding HeaderSecondaryText}"
+                       IsVisible="{Binding ShowDateHeaderDetails}"
+                       Style="{DynamicResource DaymarkDateMeta}"
+                       HorizontalTextAlignment="Start"/>
+                <Label Text="{Binding HeaderTertiaryText}"
+                       IsVisible="{Binding ShowDateHeaderDetails}"
+                       Style="{DynamicResource DaymarkDateMeta}"
+                       HorizontalTextAlignment="Start"/>
+            </VerticalStackLayout>
+        </Grid>
 
         <!-- Section Titles -->
 
         <Grid Grid.Row="1"
-              ColumnDefinitions="36,34,*"
+              ColumnDefinitions="32,38,*"
               ColumnSpacing="10"
               Padding="{DynamicResource SectionHeaderPadding}">
             <Border Grid.Column="0"
@@ -77,26 +95,14 @@
                    HorizontalTextAlignment="Center"/>
         </Grid>
 
-        <Grid Grid.Row="2">
+        <Border Grid.Row="2"
+                Style="{DynamicResource ThemedCard}"
+                StrokeThickness="{DynamicResource DividerThickness}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="{DynamicResource ListCardCornerRadius}"/>
+            </Border.StrokeShape>
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="3"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="1"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <BoxView Grid.ColumnSpan="2"
-                     Style="{DynamicResource DividerStrong}"/>
-            <BoxView Grid.RowSpan="2"
-                     Style="{DynamicResource GridLineStrong}"/>
-
-            <Grid Grid.Row="1"
-                  Grid.Column="1"
-                  BackgroundColor="{DynamicResource WritingPaper}"
+            <Grid BackgroundColor="{DynamicResource WritingPaper}"
                   RowDefinitions="*,Auto">
                 <!-- iOS workaround: retained ListView is used here because CollectionView row measurement
                      and separator rendering became unstable across repeated date navigation. -->
@@ -112,10 +118,10 @@
                         <DataTemplate x:DataType="models:TaskItem">
                             <ViewCell>
                                 <ContentView BackgroundColor="{DynamicResource WritingPaper}">
-                                    <Grid ColumnDefinitions="24,1,38,1,*"
+                                    <Grid ColumnDefinitions="32,38,*"
                                           RowDefinitions="Auto,1"
                                           RowSpacing="0"
-                                          ColumnSpacing="8"
+                                          ColumnSpacing="10"
                                           Padding="0,0,0,0"
                                           VerticalOptions="Start">
                                         <Grid.GestureRecognizers>
@@ -129,7 +135,7 @@
                                                FontSize="20"
                                                HeightRequest="24"
                                                WidthRequest="24"
-                                               Margin="{OnPlatform iOS='8,3,0,3', Default='8,2,0,3'}"
+                                               Margin="{OnPlatform iOS='0,-3,0,3', Default='0,-3,0,3'}"
                                                HorizontalOptions="Center"
                                                HorizontalTextAlignment="Center"
                                                VerticalOptions="Start"
@@ -137,18 +143,18 @@
                                                Style="{StaticResource Handwriting}"
                                                FontAttributes="Bold"/>
 
-                                        <BoxView Grid.Column="1"
-                                                 Style="{DynamicResource GridLineSoft}"/>
-                                        <Label Grid.Column="2"
+                                        <Label Grid.Column="1"
                                                Margin="{OnPlatform iOS='-5,0,-5,3', Default='-5,0,-5,3'}"
                                                Padding="0"
                                                Text="{Binding PriorityOrder}"
+                                               LineBreakMode="NoWrap"
+                                               MaxLines="1"
                                                HorizontalTextAlignment="Center"
                                                VerticalTextAlignment="Start"
-                                               Style="{StaticResource Handwriting}"/>
-                                        <BoxView Grid.Column="3"
-                                                 Style="{DynamicResource GridLineSoft}"/>
-                                        <Label Grid.Column="4"
+                                               Style="{StaticResource Handwriting}"
+                                               TextColor="{DynamicResource Ink}"/>
+
+                                        <Label Grid.Column="2"
                                                Margin="{OnPlatform iOS='0,0,0,3', Default='0,0,0,3'}"
                                                Padding="0"
                                                LineBreakMode="WordWrap"
@@ -161,12 +167,13 @@
                                                           Style="{StaticResource Handwriting}"
                                                           TextColor="{DynamicResource Ink}"/>
                                                     <Span Text="{Binding ForwardedFromDate, StringFormat=' ({0})', TargetNullValue=''}"
+                                                          Style="{StaticResource Handwriting}"
                                                           TextColor="{DynamicResource Accent}"/>
                                                 </FormattedString>
                                             </Label.FormattedText>
                                         </Label>
                                         <BoxView Grid.Row="1"
-                                                 Grid.ColumnSpan="5"
+                                                 Grid.ColumnSpan="3"
                                                  Style="{DynamicResource DividerSoft}"
                                                  VerticalOptions="End"/>
                                     </Grid>
@@ -178,31 +185,25 @@
 
                 <Grid Grid.Row="1"
                       RowDefinitions="1,Auto"
-                      ColumnDefinitions="24,1,38,1,*"
-                      ColumnSpacing="8"
+                      ColumnDefinitions="32,38,*"
+                      ColumnSpacing="10"
                       Padding="0,0,0,0">
                     <Grid.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnAddTaskTapped"/>
                     </Grid.GestureRecognizers>
                     <BoxView Grid.Row="0"
-                             Grid.ColumnSpan="5"
+                             Grid.ColumnSpan="3"
                              Style="{DynamicResource DividerSoft}"/>
                     <Image Grid.Row="1"
                            Grid.Column="0"
                            Source="plus.webp"
                            HeightRequest="24"
                            WidthRequest="24"
-                           Margin="8,3,0,0"
+                           Margin="0,3,0,0"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"/>
-                    <BoxView Grid.Row="1"
-                             Grid.Column="1"
-                             Style="{DynamicResource GridLineSoft}"/>
-                    <BoxView Grid.Row="1"
-                             Grid.Column="3"
-                             Style="{DynamicResource GridLineSoft}"/>
                     <Label Grid.Row="1"
-                           Grid.Column="4"
+                           Grid.Column="2"
                            Text="New task..."
                            VerticalTextAlignment="Center"
                            Style="{StaticResource Handwriting}"
@@ -210,12 +211,7 @@
                            TextColor="{DynamicResource Line}"/>
                 </Grid>
             </Grid>
-
-            <BoxView Grid.Row="1"
-                     Grid.ColumnSpan="2"
-                     Style="{DynamicResource DividerStrong}"
-                     VerticalOptions="End"/>
-        </Grid>
+        </Border>
 
     </Grid>
 

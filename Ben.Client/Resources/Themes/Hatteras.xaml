@@ -49,6 +49,7 @@
     <x:Double x:Key="RadiusSmall">2</x:Double>
     <x:Double x:Key="RadiusMedium">4</x:Double>
     <x:Double x:Key="RadiusLarge">8</x:Double>
+    <CornerRadius x:Key="ListCardCornerRadius">10</CornerRadius>
     <x:Double x:Key="GridLineOpacity">0.45</x:Double>
     <x:String x:Key="GridMode">Strong</x:String>
     <!-- NeueHaasGrotesk is a licensed font; falls back to Inter-Regular -->

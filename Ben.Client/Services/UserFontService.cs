@@ -3,7 +3,7 @@ namespace Ben.Services;
 public class UserFontService
 {
     private const string SelectedUserFontPreferenceKey = "SelectedUserFont";
-    private const string DefaultUserFontAlias = "OpenSans";
+    private const string DefaultUserFontAlias = "Inter-Regular";
 
     private string _currentUserFont;
 

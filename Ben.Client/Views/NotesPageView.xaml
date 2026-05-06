@@ -86,25 +86,14 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="3"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="1"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <Border Grid.Row="2"
+                Style="{DynamicResource ThemedCard}"
+                StrokeThickness="{DynamicResource DividerThickness}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="{DynamicResource ListCardCornerRadius}"/>
+            </Border.StrokeShape>
 
-            <BoxView Grid.ColumnSpan="2"
-                     Style="{DynamicResource DividerStrong}"/>
-            <BoxView Grid.RowSpan="2"
-                     Style="{DynamicResource GridLineStrong}"/>
-
-            <Grid Grid.Row="1"
-                  Grid.Column="1"
-                  BackgroundColor="{DynamicResource WritingPaper}"
+            <Grid BackgroundColor="{DynamicResource WritingPaper}"
                   RowDefinitions="*,Auto">
                 <!-- iOS workaround: retained ListView is used here because CollectionView row measurement
                      and separator rendering became unstable across repeated date navigation. -->
@@ -120,10 +109,10 @@
                         <DataTemplate x:DataType="models:NoteItem">
                             <ViewCell>
                                 <ContentView BackgroundColor="{DynamicResource WritingPaper}">
-                                    <Grid ColumnDefinitions="32,1,*"
+                                    <Grid ColumnDefinitions="28,*"
                                           RowDefinitions="Auto,1"
                                           RowSpacing="0"
-                                          ColumnSpacing="8"
+                                          ColumnSpacing="10"
                                           Padding="0,0,0,0"
                                           VerticalOptions="Start">
                                         <Grid.GestureRecognizers>
@@ -131,15 +120,12 @@
                                         </Grid.GestureRecognizers>
                                         <Label Grid.Column="0"
                                                Text="{Binding Order}"
-                                               Margin="{OnPlatform iOS='-5,0,-5,3', Default='-5,0,-5,3'}"
-                                               HorizontalTextAlignment="Center"
+                                               HorizontalTextAlignment="End"
                                                VerticalTextAlignment="Start"
-                                               Style="{StaticResource Handwriting}"/>
-                                        <BoxView Grid.Column="1"
-                                                 Style="{DynamicResource GridLineSoft}"
-                                                 HorizontalOptions="Center"
-                                                 VerticalOptions="Fill"/>
-                                        <Label Grid.Column="2"
+                                               FontFamily="{DynamicResource ThemeDateDayFont}"
+                                               FontSize="13"
+                                               TextColor="{DynamicResource SecondaryInkBrush}"/>
+                                        <Label Grid.Column="1"
                                                Text="{Binding Text}"
                                                Margin="{OnPlatform iOS='0,0,0,3', Default='0,0,0,3'}"
                                                LineBreakMode="WordWrap"
@@ -147,7 +133,7 @@
                                                VerticalTextAlignment="Start"
                                                Style="{StaticResource Handwriting}"/>
                                         <BoxView Grid.Row="1"
-                                                 Grid.ColumnSpan="3"
+                                                 Grid.ColumnSpan="2"
                                                  Style="{DynamicResource DividerSoft}"
                                                  VerticalOptions="End"/>
                                     </Grid>
@@ -159,14 +145,14 @@
 
                 <Grid Grid.Row="1"
                       RowDefinitions="1,Auto"
-                      ColumnDefinitions="32,1,*"
-                      ColumnSpacing="8"
+                      ColumnDefinitions="28,*"
+                      ColumnSpacing="10"
                       Padding="0,0,0,0">
                     <Grid.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnAddNoteTapped"/>
                     </Grid.GestureRecognizers>
                     <BoxView Grid.Row="0"
-                             Grid.ColumnSpan="3"
+                             Grid.ColumnSpan="2"
                              Style="{DynamicResource DividerSoft}"/>
                     <Image Grid.Row="1"
                            Grid.Column="0"
@@ -176,13 +162,8 @@
                            Margin="8,3,0,0"
                            HorizontalOptions="Center"
                            VerticalOptions="Center"/>
-                    <BoxView Grid.Row="1"
-                             Grid.Column="1"
-                             Style="{DynamicResource GridLineSoft}"
-                             HorizontalOptions="Center"
-                             VerticalOptions="Fill"/>
                     <Label Grid.Row="1"
-                           Grid.Column="2"
+                           Grid.Column="1"
                            Text="New note..."
                            VerticalTextAlignment="Center"
                            HorizontalTextAlignment="Start"
@@ -191,11 +172,6 @@
                            TextColor="{DynamicResource Line}"/>
                 </Grid>
             </Grid>
-
-            <BoxView Grid.Row="1"
-                     Grid.ColumnSpan="2"
-                     Style="{DynamicResource DividerStrong}"
-                     VerticalOptions="End"/>
-        </Grid>
+        </Border>
     </Grid>
 </ContentView>

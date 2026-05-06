@@ -18,7 +18,7 @@
                 <Setter Property="FontFamily"
                         Value="{DynamicResource UserHandwritingFont}"/>
                 <Setter Property="FontSize"
-                        Value="24"/>
+                        Value="17"/>
                 <Setter Property="FontAutoScalingEnabled"
                         Value="False"/>
                 <Setter Property="VerticalTextAlignment"
@@ -198,6 +198,66 @@
                         Value="{DynamicResource HeaderForegroundBrush}"/>
                 <Setter Property="Opacity"
                         Value="0.85"/>
+        </Style>
+
+        <Style x:Key="DaymarkHeaderBand"
+               TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{DynamicResource HeaderBackgroundBrush}"/>
+                <Setter Property="StrokeThickness"
+                        Value="0"/>
+                <Setter Property="Padding"
+                        Value="0"/>
+        </Style>
+
+        <Style x:Key="DaymarkHeaderRule"
+               TargetType="BoxView">
+                <Setter Property="BackgroundColor"
+                        Value="{DynamicResource Accent}"/>
+                <Setter Property="HeightRequest"
+                        Value="4"/>
+                <Setter Property="HorizontalOptions"
+                        Value="Fill"/>
+                <Setter Property="VerticalOptions"
+                        Value="End"/>
+        </Style>
+
+        <Style x:Key="DaymarkDateBadge"
+               TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{DynamicResource HeaderBackgroundBrush}"/>
+                <Setter Property="StrokeThickness"
+                        Value="0"/>
+                <Setter Property="Padding"
+                        Value="0"/>
+        </Style>
+
+        <Style x:Key="DaymarkDateNumber"
+               TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{DynamicResource ThemeDateNumberFont}"/>
+                <Setter Property="FontSize"
+                        Value="42"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource HeaderForegroundBrush}"/>
+                <Setter Property="FontAttributes"
+                        Value="Bold"/>
+                <Setter Property="FontAutoScalingEnabled"
+                        Value="False"/>
+                <Setter Property="HorizontalTextAlignment"
+                        Value="Center"/>
+                <Setter Property="VerticalTextAlignment"
+                        Value="Center"/>
+        </Style>
+
+        <Style x:Key="DaymarkDateMeta"
+               TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{DynamicResource ThemeDateDayFont}"/>
+                <Setter Property="FontSize"
+                        Value="16"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource InkBrush}"/>
         </Style>
 
         <Style x:Key="LabelTitle"
