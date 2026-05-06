@@ -144,6 +144,172 @@
                         Value="{DynamicResource BorderThickness}"/>
         </Style>
 
+        <Style x:Key="ThemedCardCompact"
+               TargetType="Border"
+               BasedOn="{StaticResource ThemedCard}">
+                <Setter Property="Padding"
+                        Value="{DynamicResource SpacingSm}"/>
+        </Style>
+
+        <Style x:Key="ThemedCardEmphasis"
+               TargetType="Border"
+               BasedOn="{StaticResource ThemedCard}">
+                <Setter Property="StrokeThickness"
+                        Value="{DynamicResource DividerThickness}"/>
+                <Setter Property="Padding"
+                        Value="{DynamicResource SpacingMd}"/>
+        </Style>
+
+        <Style x:Key="HeaderContainer"
+               TargetType="Grid">
+                <Setter Property="BackgroundColor"
+                        Value="{DynamicResource HeaderBackgroundBrush}"/>
+                <Setter Property="Padding"
+                        Value="{DynamicResource SpacingMd}"/>
+        </Style>
+
+        <Style x:Key="HeaderPatternStripe"
+               TargetType="BoxView">
+                <Setter Property="BackgroundColor"
+                        Value="{DynamicResource HeaderForegroundBrush}"/>
+                <Setter Property="Opacity"
+                        Value="{DynamicResource HeaderPatternOpacity}"/>
+        </Style>
+
+        <Style x:Key="HeaderTitle"
+               TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{DynamicResource ThemeHeaderFont}"/>
+                <Setter Property="FontAttributes"
+                        Value="Bold"/>
+                <Setter Property="FontSize"
+                        Value="18"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource HeaderForegroundBrush}"/>
+        </Style>
+
+        <Style x:Key="HeaderMeta"
+               TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{DynamicResource ThemeDateDayFont}"/>
+                <Setter Property="FontSize"
+                        Value="12"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource HeaderForegroundBrush}"/>
+                <Setter Property="Opacity"
+                        Value="0.85"/>
+        </Style>
+
+        <Style x:Key="LabelTitle"
+               TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{DynamicResource ThemeHeaderFont}"/>
+                <Setter Property="FontAttributes"
+                        Value="Bold"/>
+                <Setter Property="FontSize"
+                        Value="16"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource InkBrush}"/>
+        </Style>
+
+        <Style x:Key="LabelSection"
+               TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{DynamicResource ThemeDateDayFont}"/>
+                <Setter Property="FontSize"
+                        Value="14"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource InkBrush}"/>
+        </Style>
+
+        <Style x:Key="LabelData"
+               TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{DynamicResource UserHandwritingFont}"/>
+                <Setter Property="FontSize"
+                        Value="20"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource InkBrush}"/>
+        </Style>
+
+        <Style x:Key="LabelMeta"
+               TargetType="Label">
+                <Setter Property="FontFamily"
+                        Value="{DynamicResource ThemeDateDayFont}"/>
+                <Setter Property="FontSize"
+                        Value="12"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource SecondaryInkBrush}"/>
+        </Style>
+
+        <Style x:Key="PrimaryActionButton"
+               TargetType="Button">
+                <Setter Property="BackgroundColor"
+                        Value="{DynamicResource Accent}"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource ButtonTextOnAccent}"/>
+                <Setter Property="HeightRequest"
+                        Value="44"/>
+                <Setter Property="Padding"
+                        Value="12,8"/>
+        </Style>
+
+        <Style x:Key="SecondaryActionButton"
+               TargetType="Button">
+                <Setter Property="BackgroundColor"
+                        Value="{DynamicResource Ink}"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource ButtonTextOnInk}"/>
+                <Setter Property="HeightRequest"
+                        Value="44"/>
+                <Setter Property="Padding"
+                        Value="12,8"/>
+        </Style>
+
+        <Style x:Key="GhostActionButton"
+               TargetType="Button">
+                <Setter Property="BackgroundColor"
+                        Value="Transparent"/>
+                <Setter Property="TextColor"
+                        Value="{DynamicResource InkBrush}"/>
+                <Setter Property="BorderColor"
+                        Value="{DynamicResource BorderColor}"/>
+                <Setter Property="BorderWidth"
+                        Value="1"/>
+                <Setter Property="HeightRequest"
+                        Value="44"/>
+        </Style>
+
+        <Style x:Key="DividerSoft"
+               TargetType="BoxView"
+               BasedOn="{StaticResource DividerH}">
+                <Setter Property="Opacity"
+                        Value="0.45"/>
+        </Style>
+
+        <Style x:Key="DividerStrong"
+               TargetType="BoxView"
+               BasedOn="{StaticResource DividerH}">
+                <Setter Property="Opacity"
+                        Value="0.95"/>
+        </Style>
+
+        <Style x:Key="GridLineSoft"
+               TargetType="BoxView"
+               BasedOn="{StaticResource DividerV}">
+                <Setter Property="Opacity"
+                        Value="{DynamicResource GridLineOpacity}"/>
+        </Style>
+
+        <Style x:Key="GridLineStrong"
+               TargetType="BoxView"
+               BasedOn="{StaticResource DividerV}">
+                <Setter Property="Opacity"
+                        Value="0.95"/>
+                <Setter Property="WidthRequest"
+                        Value="{DynamicResource BorderThickness}"/>
+        </Style>
+
         <Style TargetType="ContentPage">
                 <Setter Property="BackgroundColor"
                         Value="{DynamicResource Paper}"/>
