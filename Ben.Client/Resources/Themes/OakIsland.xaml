@@ -38,14 +38,18 @@
     <x:Double x:Key="CornerRadius">6</x:Double>
     <x:String x:Key="ThemeHeaderFont">
         <OnPlatform x:TypeArguments="x:String">
-            <On Platform="iOS,MacCatalyst" Value="SFProRounded-Medium"/>
-            <On Platform="Android,WinUI" Value="Roboto"/>
+            <On Platform="iOS,MacCatalyst"
+                    Value="SFProRounded-Medium"/>
+            <On Platform="Android,WinUI"
+                    Value="Roboto"/>
         </OnPlatform>
     </x:String>
     <x:String x:Key="ThemeDateNumberFont">
         <OnPlatform x:TypeArguments="x:String">
-            <On Platform="iOS,MacCatalyst" Value="SFProRounded-Medium"/>
-            <On Platform="Android,WinUI" Value="Roboto"/>
+            <On Platform="iOS,MacCatalyst"
+                    Value="SFProRounded-Medium"/>
+            <On Platform="Android,WinUI"
+                    Value="Roboto"/>
         </OnPlatform>
     </x:String>
     <x:String x:Key="ThemeDateDayFont">Roboto</x:String>
