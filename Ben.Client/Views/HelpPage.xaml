@@ -133,9 +133,7 @@
 
                      <Button Grid.Row="2"
                              Text="Back"
-                             BackgroundColor="{DynamicResource Ink}"
-                             TextColor="{DynamicResource WritingPaper}"
-                             CornerRadius="4"
+                             Style="{DynamicResource SecondaryActionButton}"
                              HeightRequest="44"
                              Clicked="OnBackClicked"/>
               </Grid>

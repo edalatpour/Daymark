@@ -76,16 +76,12 @@
                 <Button Grid.Column="0"
                         Text="Cancel"
                         Clicked="OnCancelClicked"
-                        BackgroundColor="{DynamicResource Ink}"
-                        TextColor="{DynamicResource WritingPaper}"
-                        CornerRadius="4"
+                        Style="{DynamicResource SecondaryActionButton}"
                         HeightRequest="44"/>
                 <Button Grid.Column="1"
                         Text="Save"
                         Clicked="OnSaveClicked"
-                        BackgroundColor="{DynamicResource Accent}"
-                        TextColor="{DynamicResource WritingPaper}"
-                        CornerRadius="4"
+                        Style="{DynamicResource PrimaryActionButton}"
                         HeightRequest="44"/>
 
             </Grid>

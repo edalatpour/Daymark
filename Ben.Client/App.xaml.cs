@@ -26,6 +26,7 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+        UserAppTheme = AppTheme.Light;
 
         Microsoft.Maui.Handlers.WindowHandler.Mapper.AppendToMapping(nameof(IWindow), (handler, view) =>
         {
