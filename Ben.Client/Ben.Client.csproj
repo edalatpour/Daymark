@@ -124,7 +124,7 @@
 	<ItemGroup>
 		<!-- App Icon -->
 		<!-- <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" /> -->
-		<MauiIcon Include="Resources\AppIcon\hatteras_appicon_ios.png" Color="Navy" Resize="True" BaseSize="1024,1024" />
+		<MauiIcon Include="Resources\AppIcon\appicon.png" Color="Navy" Resize="True" BaseSize="1024,1024" />
 
 		<!-- Splash Screen -->
 		<!-- <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
