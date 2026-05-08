@@ -1,0 +1,12 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Group with thin stroke and rounded corners -->
+  <g stroke="white" stroke-width="80" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Inverted triangle with slightly rounded corners -->
+    <path d="M160 256 
+             L864 256 
+             L512 896 
+             Z"/>
+    <!-- Pole (kept straight, but with rounded caps) -->
+    <line x1="512" y1="896" x2="512" y2="1152" />
+  </g>
+</svg>
