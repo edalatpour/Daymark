@@ -131,7 +131,7 @@
 		<!-- <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
 		<!-- <MauiSplashScreen Include="Resources\AppIcon\b.png" Color="#1F4E4B" /> -->
       	<!-- <MauiSplashScreen Include="Resources\Splash\hatteras_splash_ios.png" Color="#E5DCC5" BaseSize="512,512" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'" /> -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0A1A2F" BaseSize="512,512" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0A1A2F" BaseSize="384,384" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
