@@ -1,0 +1,36 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Brighter champagne bronze with stronger sunlight reflection -->
+    <linearGradient id="bronzeChampagne" x1="170" y1="140" x2="870" y2="980" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6A442A"/>
+      <stop offset="0.16" stop-color="#A77447"/>
+      <stop offset="0.36" stop-color="#D7A56C"/>
+      <stop offset="0.53" stop-color="#FFE4AE"/>
+      <stop offset="0.66" stop-color="#E6BC80"/>
+      <stop offset="0.86" stop-color="#9A673D"/>
+      <stop offset="1" stop-color="#6A4228"/>
+    </linearGradient>
+    <linearGradient id="champagneGlint" x1="220" y1="170" x2="650" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF9E8" stop-opacity="1"/>
+      <stop offset="0.28" stop-color="#FFEEC9" stop-opacity="0.58"/>
+      <stop offset="0.6" stop-color="#FFDFA8" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFDFA8" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <g stroke="url(#bronzeChampagne)" stroke-width="80" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M220 300 
+             L804 300 
+             L512 820 
+             Z"/>
+    <line x1="512" y1="820" x2="512" y2="980" />
+  </g>
+
+  <g stroke="url(#champagneGlint)" stroke-width="26" stroke-linejoin="round" stroke-linecap="round" opacity="0.82">
+    <path d="M220 300 
+             L804 300 
+             L512 820 
+             Z"/>
+    <line x1="512" y1="820" x2="512" y2="980" />
+  </g>
+</svg>
