@@ -45,15 +45,15 @@
 
                     <HorizontalStackLayout>
                         <Image Source="{DynamicResource RootGridBackground}"
-                               Opacity="0.5"
+                               Opacity="0.25"
                                HorizontalOptions="Start"
                                VerticalOptions="Start"/>
                         <Image Source="{DynamicResource RootGridBackground}"
-                               Opacity="0.5"
+                               Opacity="0.25"
                                HorizontalOptions="Start"
                                VerticalOptions="Start"/>
                         <Image Source="{DynamicResource RootGridBackground}"
-                               Opacity="0.5"
+                               Opacity="0.25"
                                HorizontalOptions="Start"
                                VerticalOptions="Start"/>
                     </HorizontalStackLayout>

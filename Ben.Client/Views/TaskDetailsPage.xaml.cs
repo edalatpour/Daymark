@@ -248,13 +248,16 @@ public partial class TaskDetailsPage : ContentPage
             string selectedPriority = PriorityValues[_priorityIndex];
             _order = Math.Clamp(_order, _minOrder, _maxOrder);
 
-            // Save to local database immediately before closing the modal
+            // Local save should complete before close, but sync should stay out of the way.
+            _viewModel.SuppressSyncForLocalSave(TimeSpan.FromSeconds(8));
+
+            // Save to local database before closing the modal.
             await SaveTaskLocallyWithRetryAsync(title, _selectedStatus, selectedPriority, _order);
 
-            // Close the modal immediately after local save
+            // Close the modal immediately after local save.
             await Navigation.PopModalAsync();
 
-            // Fire-and-forget: sort tasks, refresh UI, then sync in background
+            // Fire-and-forget: sort tasks, refresh UI, then sync in background.
             _ = _viewModel.CompleteTaskSaveAfterCloseAsync(
                 _task,
                 selectedPriority,
@@ -301,7 +304,6 @@ public partial class TaskDetailsPage : ContentPage
 
         throw lastError ?? new InvalidOperationException("Local task save failed.");
     }
-
     async void OnCancelClicked(object sender, EventArgs e)
     {
         await Navigation.PopModalAsync();

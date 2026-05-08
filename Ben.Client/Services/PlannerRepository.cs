@@ -10,11 +10,14 @@ public class PlannerRepository
 {
     private readonly PlannerDbContext _db;
     private readonly DatasyncSyncService _syncService;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly SemaphoreSlim _dbContextLock = new(1, 1);
 
-    public PlannerRepository(PlannerDbContext db, DatasyncSyncService syncService)
+    public PlannerRepository(PlannerDbContext db, DatasyncSyncService syncService, IServiceScopeFactory scopeFactory)
     {
         _db = db;
         _syncService = syncService;
+        _scopeFactory = scopeFactory;
     }
 
     public Task<DailyData> LoadDayAsync(DateTime key)
@@ -24,9 +27,11 @@ public class PlannerRepository
 
     public async Task<DailyData> LoadPageAsync(string key)
     {
-        _db.ChangeTracker.Clear();
+        using IServiceScope scope = _scopeFactory.CreateScope();
+        PlannerDbContext context = scope.ServiceProvider.GetRequiredService<PlannerDbContext>();
+        context.ChangeTracker.Clear();
 
-        var tasks = await _db.Tasks
+        var tasks = await context.Tasks
             .AsNoTracking()
             .Where(t => t.Key == key)
             .OrderBy(t => t.Priority == "A" ? 0
@@ -56,7 +61,7 @@ public class PlannerRepository
         Dictionary<string, string> keyById = new(StringComparer.Ordinal);
         if (allReferencedIds.Count > 0)
         {
-            var referencedKeys = await _db.Tasks
+            var referencedKeys = await context.Tasks
                 .AsNoTracking()
                 .Where(task => allReferencedIds.Contains(task.Id))
                 .Select(task => new { task.Id, task.Key })
@@ -74,7 +79,7 @@ public class PlannerRepository
 
         if (referencedProjectIds.Count > 0)
         {
-            var referencedProjects = await _db.Projects
+            var referencedProjects = await context.Projects
                 .AsNoTracking()
                 .Where(project => !project.Deleted && referencedProjectIds.Contains(project.Id))
                 .Select(project => new { project.Id, project.Name })
@@ -116,7 +121,7 @@ public class PlannerRepository
             }
         }
 
-        var notes = await _db.Notes
+        var notes = await context.Notes
             .AsNoTracking()
             .Where(n => n.Key == key)
             .OrderBy(n => n.Order)
@@ -134,8 +139,17 @@ public class PlannerRepository
 
     public async Task AddTaskAsync(TaskItem task, bool triggerSync = true)
     {
-        _db.Tasks.Add(task);
-        await _db.SaveChangesAsync();
+        await _dbContextLock.WaitAsync();
+        try
+        {
+            _db.Tasks.Add(task);
+            await _db.SaveChangesAsync();
+        }
+        finally
+        {
+            _dbContextLock.Release();
+        }
+
         if (triggerSync)
         {
             _ = _syncService.TriggerSyncAsync();
@@ -158,6 +172,36 @@ public class PlannerRepository
             .Where(task => task.Id == taskId)
             .Select(task => task.Key)
             .FirstOrDefaultAsync();
+    }
+
+    public Task<string?> GetNoteKeyByIdAsync(string noteId)
+    {
+        if (string.IsNullOrWhiteSpace(noteId))
+        {
+            return Task.FromResult<string?>(null);
+        }
+
+        return _db.Notes
+            .Where(note => note.Id == noteId)
+            .Select(note => note.Key)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<string?> GetProjectKeyByIdAsync(string projectId)
+    {
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            return null;
+        }
+
+        string? id = await _db.Projects
+            .Where(project => !project.Deleted && project.Id == projectId)
+            .Select(project => project.Id)
+            .FirstOrDefaultAsync();
+
+        return string.IsNullOrWhiteSpace(id)
+            ? null
+            : KeyConvention.ToProjectKey(id);
     }
 
     public Task<List<string>> GetProjectKeysAsync()
@@ -285,23 +329,31 @@ public class PlannerRepository
 
     public async Task UpdateTaskAsync(TaskItem task, bool triggerSync = true)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await _dbContextLock.WaitAsync();
         try
         {
-            // Delete any child tasks (tasks that were forwarded from this parent)
-            // to prevent duplicate forwarding if the task is edited and forwarded again
-            await DeleteChildTasksInternalAsync(task.Id);
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
+            {
+                // Preserve forward semantics: if a forwarded parent is edited, remove existing children.
+                await DeleteChildTasksInternalAsync(task.Id);
 
-            _db.Tasks.Update(task);
-            await _db.SaveChangesAsync();
+                _db.Tasks.Update(task);
+                await _db.SaveChangesAsync();
 
-            await transaction.CommitAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-        catch
+        finally
         {
-            await transaction.RollbackAsync();
-            throw;
+            _dbContextLock.Release();
         }
+
 
         if (triggerSync)
         {
@@ -322,25 +374,34 @@ public class PlannerRepository
             return;
         }
 
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await _dbContextLock.WaitAsync();
         try
         {
-            // Delete any child tasks for each parent task being updated
-            foreach (TaskItem task in uniqueTasks)
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
-                await DeleteChildTasksInternalAsync(task.Id);
+                // Preserve forward semantics for all updated parents, then persist once.
+                foreach (TaskItem task in uniqueTasks)
+                {
+                    await DeleteChildTasksInternalAsync(task.Id);
+                }
+
+                _db.Tasks.UpdateRange(uniqueTasks);
+                await _db.SaveChangesAsync();
+
+                await transaction.CommitAsync();
             }
-
-            _db.Tasks.UpdateRange(uniqueTasks);
-            await _db.SaveChangesAsync();
-
-            await transaction.CommitAsync();
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-        catch
+        finally
         {
-            await transaction.RollbackAsync();
-            throw;
+            _dbContextLock.Release();
         }
+
 
         if (triggerSync)
         {
@@ -361,30 +422,39 @@ public class PlannerRepository
             return;
         }
 
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await _dbContextLock.WaitAsync();
         try
         {
-            // Delete any existing child tasks to prevent duplicates
-            // when a previously forwarded task is edited and forwarded again
-            await DeleteChildTasksInternalAsync(sourceTask.Id);
-
-            if (!TryQueueForwardTask(
-                sourceTask,
-                destinationKey,
-                out _,
-                forwardedTaskSeed))
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
-                return;
-            }
+                // Delete any existing child tasks to prevent duplicates
+                // when a previously forwarded task is edited and forwarded again
+                await DeleteChildTasksInternalAsync(sourceTask.Id);
 
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+                if (!TryQueueForwardTask(
+                    sourceTask,
+                    destinationKey,
+                    out _,
+                    forwardedTaskSeed))
+                {
+                    return;
+                }
+
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-        catch
+        finally
         {
-            await transaction.RollbackAsync();
-            throw;
+            _dbContextLock.Release();
         }
+
 
         if (triggerSync)
         {
@@ -553,22 +623,31 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
 
     public async Task DeleteTaskAsync(TaskItem task)
     {
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await _dbContextLock.WaitAsync();
         try
         {
-            // Clean up any child tasks (forwarded tasks) before deleting the parent
-            await DeleteChildTasksInternalAsync(task.Id);
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
+            {
+                // Clean up any child tasks (forwarded tasks) before deleting the parent
+                await DeleteChildTasksInternalAsync(task.Id);
 
-            _db.Tasks.Remove(task);
-            await _db.SaveChangesAsync();
+                _db.Tasks.Remove(task);
+                await _db.SaveChangesAsync();
 
-            await transaction.CommitAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-        catch
+        finally
         {
-            await transaction.RollbackAsync();
-            throw;
+            _dbContextLock.Release();
         }
+
 
         TriggerSync();
     }
@@ -576,7 +655,7 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
     /// <summary>
     /// Deletes all child tasks (tasks where ParentTaskId == parentTaskId) from the database.
     /// This is used to clean up forwarded tasks when a parent task is updated or re-forwarded.
-    /// Should be called within a transaction to ensure consistency.
+    /// Callers are expected to persist via SaveChanges within their surrounding transaction.
     /// </summary>
     private async Task DeleteChildTasksInternalAsync(string parentTaskId)
     {
@@ -585,6 +664,8 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
             return;
         }
 
+        // IMPORTANT: Keep this as tracked EF deletes (no ExecuteDelete/direct SQL).
+        // OfflineDbContext must see entity deletes so Datasync queues matching delete operations.
         List<TaskItem> childTasks = await _db.Tasks
             .Where(task => task.ParentTaskId == parentTaskId)
             .ToListAsync();
@@ -595,13 +676,21 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
         }
 
         _db.Tasks.RemoveRange(childTasks);
-        await _db.SaveChangesAsync();
     }
 
     public async Task AddNoteAsync(NoteItem note, bool triggerSync = true)
     {
-        _db.Notes.Add(note);
-        await _db.SaveChangesAsync();
+        await _dbContextLock.WaitAsync();
+        try
+        {
+            _db.Notes.Add(note);
+            await _db.SaveChangesAsync();
+        }
+        finally
+        {
+            _dbContextLock.Release();
+        }
+
         if (triggerSync)
         {
             TriggerSync();
@@ -610,8 +699,17 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
 
     public async Task UpdateNoteAsync(NoteItem note, bool triggerSync = true)
     {
-        _db.Notes.Update(note);
-        await _db.SaveChangesAsync();
+        await _dbContextLock.WaitAsync();
+        try
+        {
+            _db.Notes.Update(note);
+            await _db.SaveChangesAsync();
+        }
+        finally
+        {
+            _dbContextLock.Release();
+        }
+
         if (triggerSync)
         {
             TriggerSync();
@@ -620,8 +718,17 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
 
     public async Task DeleteNoteAsync(NoteItem note)
     {
-        _db.Notes.Remove(note);
-        await _db.SaveChangesAsync();
+        await _dbContextLock.WaitAsync();
+        try
+        {
+            _db.Notes.Remove(note);
+            await _db.SaveChangesAsync();
+        }
+        finally
+        {
+            _dbContextLock.Release();
+        }
+
         TriggerSync();
     }
 

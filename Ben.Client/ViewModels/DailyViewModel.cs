@@ -37,6 +37,7 @@ public class DailyViewModel : INotifyPropertyChanged
     private readonly List<string> _quotes = [];
     private bool _quotesLoaded;
     private bool _isSyncing;
+    private SyncIssueInfo? _lastSyncIssue;
     private string _currentProjectName = string.Empty;
 
     public DailyViewModel(PlannerRepository repo, AuthenticationService authService, ExternalIdAuthService externalIdAuthService, DatasyncSyncService syncService, PlannerDbContext dbContext, LocalSchemaDbContext schemaDbContext, IConnectivity connectivity)
@@ -58,6 +59,7 @@ public class DailyViewModel : INotifyPropertyChanged
         _externalIdAuthService.AuthenticationStateChanged += OnAuthenticationStateChanged;
         _syncService.SyncStarted += OnSyncStarted;
         _syncService.SyncCompleted += OnSyncCompleted;
+        _syncService.SyncIssueDetected += OnSyncIssueDetected;
 
         // Initial update
         _ = UpdateStatus();
@@ -100,6 +102,12 @@ public class DailyViewModel : INotifyPropertyChanged
         _isSyncing = false;
         await RefreshCurrentPageAfterSyncAsync();
         await UpdateStatus();
+    }
+
+    private void OnSyncIssueDetected(object? sender, SyncIssueInfo issue)
+    {
+        _lastSyncIssue = issue;
+        _ = UpdateStatus();
     }
 
     private string _loginStatusText = "Sign in with Microsoft";
@@ -207,24 +215,23 @@ public class DailyViewModel : INotifyPropertyChanged
 
         if (!IsAuthenticated)
         {
+            _lastSyncIssue = null;
             SyncStatusText = "Not signed in";
             return;
         }
 
-        // Update sync status
-        if (_isSyncing)
-        {
-            SyncStatusText = "Synchronizing...";
-        }
-        else if (_connectivity.NetworkAccess != NetworkAccess.Internet)
+        // Sync runs in the background; status should reflect connectivity and pending work,
+        // not a potentially long-running transient operation.
+        if (_connectivity.NetworkAccess != NetworkAccess.Internet)
         {
             var pendingCount = await _syncService.GetUnsyncedChangesCountAsync();
             if (pendingCount > 0)
             {
-                SyncStatusText = pendingCount == 1 ? "1 pending change" : $"{pendingCount} pending changes";
+                SyncStatusText = BuildPendingSyncText(pendingCount);
             }
             else
             {
+                _lastSyncIssue = null;
                 SyncStatusText = "No connectivity";
             }
         }
@@ -233,13 +240,45 @@ public class DailyViewModel : INotifyPropertyChanged
             var pendingCount = await _syncService.GetUnsyncedChangesCountAsync();
             if (pendingCount > 0)
             {
-                SyncStatusText = pendingCount == 1 ? "1 pending change" : $"{pendingCount} pending changes";
+                SyncStatusText = BuildPendingSyncText(pendingCount);
             }
             else
             {
+                _lastSyncIssue = null;
                 SyncStatusText = "Up to date";
             }
         }
+    }
+
+    private string BuildPendingSyncText(int pendingCount)
+    {
+        string baseText = pendingCount == 1
+            ? "1 pending change"
+            : $"{pendingCount} pending changes";
+
+        SyncIssueInfo? issue = _syncService.LatestSyncIssue ?? _lastSyncIssue;
+        if (issue == null)
+        {
+            return baseText;
+        }
+
+        string label = issue.IsConflict ? "conflict" : "failed";
+        if (!string.IsNullOrWhiteSpace(issue.EntityTitle))
+        {
+            return $"{baseText} ({label}: {issue.EntityTitle})";
+        }
+
+        if (!string.IsNullOrWhiteSpace(issue.EntityKey))
+        {
+            return $"{baseText} ({label}: {issue.EntityKey})";
+        }
+
+        if (!string.IsNullOrWhiteSpace(issue.EntityId))
+        {
+            return $"{baseText} ({label}: {issue.EntityId})";
+        }
+
+        return baseText;
     }
 
     private async Task RestoreAuthenticatedSessionAsync()
@@ -247,10 +286,9 @@ public class DailyViewModel : INotifyPropertyChanged
         try
         {
             _syncService.Start();
-            _isSyncing = true;
             await UpdateStatus();
 
-            _ = await _syncService.TrySyncNowAsync();
+            _ = _syncService.TrySyncNowAsync();
             await LoadPageAsync(CurrentDay?.Key ?? KeyConvention.ToDateKey(CurrentDate));
         }
         catch (Exception ex)
@@ -259,7 +297,6 @@ public class DailyViewModel : INotifyPropertyChanged
         }
         finally
         {
-            _isSyncing = false;
             await UpdateStatus();
         }
     }
@@ -909,6 +946,11 @@ public class DailyViewModel : INotifyPropertyChanged
         await _repo.UpdateTaskAsync(task, triggerSync: false);
     }
 
+    public void SuppressSyncForLocalSave(TimeSpan duration)
+    {
+        _syncService.SuppressSyncFor(duration);
+    }
+
     public async Task CompleteTaskSaveAfterCloseAsync(
         TaskItem task,
         string priority,
@@ -1423,7 +1465,25 @@ public class DailyViewModel : INotifyPropertyChanged
 
         if (_externalIdAuthService.IsAuthenticated)
         {
-            // Sign out from External ID (Apple) — no server calls needed
+            // Sign out from External ID (Apple) with full local sync cleanup.
+            await _syncService.CancelAndDisposeAsync();
+
+            _dbContext.ChangeTracker.Clear();
+            _schemaDbContext.ChangeTracker.Clear();
+
+            var plannerConnection = _dbContext.Database.GetDbConnection();
+            if (plannerConnection.State != System.Data.ConnectionState.Closed)
+            {
+                plannerConnection.Close();
+            }
+
+            var schemaConnection = _schemaDbContext.Database.GetDbConnection();
+            if (schemaConnection.State != System.Data.ConnectionState.Closed)
+            {
+                schemaConnection.Close();
+            }
+
+            _ = await _dbContext.DeleteDatabaseFileAsync();
             _externalIdAuthService.SignOut();
             await UpdateStatus();
             return;
@@ -1490,16 +1550,56 @@ public class DailyViewModel : INotifyPropertyChanged
             return;
         }
 
-        try
+        // SyncStarted/SyncCompleted events are the source of truth for in-progress state.
+        _repo.TriggerSync();
+        await UpdateStatus();
+    }
+
+    public async Task<bool> TryNavigateToLatestSyncIssueAsync()
+    {
+        SyncIssueInfo? issue = _syncService.LatestSyncIssue ?? _lastSyncIssue;
+        if (issue == null)
         {
-            _isSyncing = true;
-            await UpdateStatus();
-            _repo.TriggerSync();
+            return false;
         }
-        finally
+
+        string? targetKey = issue.EntityKey;
+        if (string.IsNullOrWhiteSpace(targetKey) && !string.IsNullOrWhiteSpace(issue.EntityId))
         {
-            // SyncCompleted event will clear status and refresh data when sync actually ends.
+            string? entityType = issue.EntityType?.Trim().ToLowerInvariant();
+
+            if (entityType == "task")
+            {
+                targetKey = await _repo.GetTaskKeyByIdAsync(issue.EntityId);
+            }
+            else if (entityType == "note")
+            {
+                targetKey = await _repo.GetNoteKeyByIdAsync(issue.EntityId);
+            }
+            else if (entityType == "project")
+            {
+                targetKey = await _repo.GetProjectKeyByIdAsync(issue.EntityId);
+            }
+            else
+            {
+                targetKey = await _repo.GetTaskKeyByIdAsync(issue.EntityId)
+                    ?? await _repo.GetNoteKeyByIdAsync(issue.EntityId)
+                    ?? await _repo.GetProjectKeyByIdAsync(issue.EntityId);
+            }
         }
+
+        if (string.IsNullOrWhiteSpace(targetKey))
+        {
+            return false;
+        }
+
+        if (string.Equals(CurrentDay?.Key, targetKey, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        await LoadPageAsync(targetKey);
+        return true;
     }
 
     int GetNextNoteOrder()

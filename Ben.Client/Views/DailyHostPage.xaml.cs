@@ -298,6 +298,11 @@ public partial class DailyHostPage : ContentPage
 
     async void OnSyncStatusTapped(object sender, EventArgs e)
     {
+        if (await ViewModel.TryNavigateToLatestSyncIssueAsync())
+        {
+            return;
+        }
+
         await ViewModel.ForceSyncAsync();
     }
 

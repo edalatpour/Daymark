@@ -35,6 +35,7 @@ public static class MauiProgram
     static void RegisterServices(MauiAppBuilder builder)
     {
         string dbPath = Path.Combine(FileSystem.AppDataDirectory, "planner.datasync.db");
+        string sqliteConnectionString = $"Filename={dbPath};Default Timeout=1";
 
         builder.Services.AddSingleton(new DatasyncOptions { Endpoint = new Uri(Constants.ServiceUri) });
         builder.Services.AddSingleton<IConnectivity>(Connectivity.Current);
@@ -46,8 +47,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<UserFontService>();
         builder.Services.AddSingleton<DatasyncSyncService>();
 
-        builder.Services.AddDbContext<LocalSchemaDbContext>(options => options.UseSqlite("Filename=" + dbPath));
-        builder.Services.AddDbContext<PlannerDbContext>((_, options) => options.UseSqlite("Filename=" + dbPath));
+        builder.Services.AddDbContext<LocalSchemaDbContext>(options => options.UseSqlite(sqliteConnectionString));
+        builder.Services.AddDbContext<PlannerDbContext>((_, options) => options.UseSqlite(sqliteConnectionString));
 
         builder.Services.AddSingleton<PlannerRepository>();
 

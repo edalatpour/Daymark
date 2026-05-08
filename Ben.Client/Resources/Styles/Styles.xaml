@@ -18,7 +18,7 @@
                 <Setter Property="FontFamily"
                         Value="{DynamicResource UserHandwritingFont}"/>
                 <Setter Property="FontSize"
-                        Value="17"/>
+                        Value="18"/>
                 <Setter Property="FontAutoScalingEnabled"
                         Value="False"/>
                 <Setter Property="VerticalTextAlignment"
@@ -32,7 +32,7 @@
                 <Setter Property="FontFamily"
                         Value="{DynamicResource UserHandwritingFont}"/>
                 <Setter Property="FontSize"
-                        Value="17"/>
+                        Value="18"/>
                 <Setter Property="FontAutoScalingEnabled"
                         Value="False"/>
                 <Setter Property="VerticalTextAlignment"
@@ -46,7 +46,7 @@
                 <Setter Property="FontFamily"
                         Value="{DynamicResource UserHandwritingFont}"/>
                 <Setter Property="FontSize"
-                        Value="17"/>
+                        Value="18"/>
                 <Setter Property="FontAutoScalingEnabled"
                         Value="False"/>
                 <Setter Property="TextColor"
@@ -304,16 +304,6 @@
                         Value="{DynamicResource ThemeDateDayFont}"/>
                 <Setter Property="FontSize"
                         Value="14"/>
-                <Setter Property="TextColor"
-                        Value="{DynamicResource InkBrush}"/>
-        </Style>
-
-        <Style x:Key="LabelData"
-               TargetType="Label">
-                <Setter Property="FontFamily"
-                        Value="{DynamicResource UserHandwritingFont}"/>
-                <Setter Property="FontSize"
-                        Value="20"/>
                 <Setter Property="TextColor"
                         Value="{DynamicResource InkBrush}"/>
         </Style>

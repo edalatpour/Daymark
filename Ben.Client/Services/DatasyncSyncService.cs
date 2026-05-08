@@ -6,9 +6,19 @@ using Microsoft.Maui.Networking;
 using Ben.Data;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.IO;
 
 namespace Ben.Services;
+
+public sealed record SyncIssueInfo(
+    string? EntityType,
+    string? EntityId,
+    string? EntityKey,
+    string? EntityTitle,
+    int? StatusCode,
+    string? ReasonPhrase,
+    bool IsConflict);
 
 public sealed class DatasyncSyncService : IDisposable
 {
@@ -16,6 +26,11 @@ public sealed class DatasyncSyncService : IDisposable
     private static readonly TimeSpan RetryInterval = TimeSpan.FromSeconds(20);
 
     private static readonly TimeSpan PendingChangesSyncInterval = TimeSpan.FromSeconds(20);
+    private static readonly string SyncTraceLogPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Ben",
+        "sync-trace.log");
+    private static readonly object SyncTraceGate = new();
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConnectivity _connectivity;
@@ -31,9 +46,14 @@ public sealed class DatasyncSyncService : IDisposable
     private bool _disposed;
     private CancellationTokenSource? _scheduledSyncCts;
     private int _pendingCountSnapshot;
+    private long _suppressSyncUntilUnixMs;
+    private SyncIssueInfo? _latestSyncIssue;
 
     public event EventHandler? SyncStarted;
     public event EventHandler? SyncCompleted;
+    public event EventHandler<SyncIssueInfo>? SyncIssueDetected;
+
+    public SyncIssueInfo? LatestSyncIssue => _latestSyncIssue;
 
     public DatasyncSyncService(
         IServiceScopeFactory scopeFactory,
@@ -80,6 +100,7 @@ public sealed class DatasyncSyncService : IDisposable
         _connectivity.ConnectivityChanged += OnConnectivityChanged;
         _periodicSyncCts = new CancellationTokenSource();
         _periodicSyncTask = RunPendingChangesSyncLoopAsync(_periodicSyncCts.Token);
+        AppendSyncTrace("Start: sync service started.");
     }
 
     /// <summary>
@@ -207,6 +228,7 @@ public sealed class DatasyncSyncService : IDisposable
 
     private void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
     {
+        AppendSyncTrace($"ConnectivityChanged: NetworkAccess={e.NetworkAccess}.");
         if (e.NetworkAccess == NetworkAccess.Internet)
         {
             _ = TrySyncAsync();
@@ -215,8 +237,37 @@ public sealed class DatasyncSyncService : IDisposable
 
     public Task TriggerSyncAsync()
     {
+        AppendSyncTrace($"TriggerSyncAsync: scheduling sync in {AutoSyncDebounce.TotalMilliseconds}ms.");
         ScheduleSync(AutoSyncDebounce);
         return Task.CompletedTask;
+    }
+
+    public void SuppressSyncFor(TimeSpan duration)
+    {
+        if (duration <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        long nowUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        long targetUnixMs = nowUnixMs + (long)duration.TotalMilliseconds;
+
+        while (true)
+        {
+            long currentUnixMs = Interlocked.Read(ref _suppressSyncUntilUnixMs);
+            if (currentUnixMs >= targetUnixMs)
+            {
+                break;
+            }
+
+            long original = Interlocked.CompareExchange(ref _suppressSyncUntilUnixMs, targetUnixMs, currentUnixMs);
+            if (original == currentUnixMs)
+            {
+                break;
+            }
+        }
+
+        AppendSyncTrace($"SuppressSyncFor: suppressed until {DateTimeOffset.FromUnixTimeMilliseconds(Interlocked.Read(ref _suppressSyncUntilUnixMs)):O}.");
     }
 
     /// <summary>
@@ -300,6 +351,7 @@ public sealed class DatasyncSyncService : IDisposable
     {
         if (_disposed)
         {
+            AppendSyncTrace("ScheduleSync: ignored because service is disposed.");
             return;
         }
 
@@ -322,8 +374,10 @@ public sealed class DatasyncSyncService : IDisposable
         {
             previous.Cancel();
             previous.Dispose();
+            AppendSyncTrace("ScheduleSync: canceled previous scheduled sync.");
         }
 
+        AppendSyncTrace($"ScheduleSync: next sync scheduled in {delay.TotalMilliseconds}ms.");
         _ = RunScheduledSyncAsync(cts, delay);
     }
 
@@ -360,6 +414,7 @@ public sealed class DatasyncSyncService : IDisposable
     {
         if (_options.Endpoint == null)
         {
+            AppendSyncTrace("TrySyncAsync: skipped (endpoint not configured).");
             return false;
         }
 
@@ -367,64 +422,118 @@ public sealed class DatasyncSyncService : IDisposable
         if (!IsAnyAuthenticated)
         {
             _logger.LogInformation("Skipping sync - user is not authenticated.");
+            AppendSyncTrace("TrySyncAsync: skipped (not authenticated).");
             return false;
         }
 
         if (_connectivity.NetworkAccess != NetworkAccess.Internet)
         {
+            AppendSyncTrace($"TrySyncAsync: skipped (network access: {_connectivity.NetworkAccess}).");
+            return false;
+        }
+
+        long suppressedUntil = Interlocked.Read(ref _suppressSyncUntilUnixMs);
+        long nowUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        if (suppressedUntil > nowUnixMs)
+        {
+            AppendSyncTrace($"TrySyncAsync: skipped (suppressed until {DateTimeOffset.FromUnixTimeMilliseconds(suppressedUntil):O}).");
+            ScheduleSync(TimeSpan.FromSeconds(2));
             return false;
         }
 
         bool lockAcquired = false;
         if (!await _syncLock.WaitAsync(0))
         {
+            AppendSyncTrace("TrySyncAsync: skipped (sync lock busy).");
             return false;
         }
 
         lockAcquired = true;
 
         bool shouldScheduleRetry = false;
+        AppendSyncTrace("TrySyncAsync: started.");
         SyncStarted?.Invoke(this, EventArgs.Empty);
 
         try
         {
             using IServiceScope scope = _scopeFactory.CreateScope();
             PlannerDbContext context = scope.ServiceProvider.GetRequiredService<PlannerDbContext>();
+            await ConfigureSqliteLockBehaviorAsync(context);
 
             PushResult pushResult = await context.PushAsync();
+            AppendSyncTrace($"TrySyncAsync: push complete. success={pushResult.IsSuccessful}, failedRequests={pushResult.FailedRequests.Count}.");
             if (!pushResult.IsSuccessful)
             {
                 _logger.LogWarning("Datasync push completed with {Count} failed requests.",
                     pushResult.FailedRequests.Count);
+                AppendSyncTrace($"TrySyncAsync: push failedRequests={pushResult.FailedRequests.Count}.");
 
                 foreach (var failedRequest in pushResult.FailedRequests)
                 {
-                    _logger.LogWarning("Datasync push failure detail: {FailedRequest}", DescribeFailedRequest(failedRequest));
+                    string detail = DescribeFailedRequest(failedRequest);
+                    _logger.LogWarning("Datasync push failure detail: {FailedRequest}", detail);
+                    AppendSyncTrace($"TrySyncAsync: push failure detail: {detail}");
+
+                    if (TryCreateSyncIssueInfo(failedRequest, out SyncIssueInfo issue))
+                    {
+                        _latestSyncIssue = issue;
+                        SyncIssueDetected?.Invoke(this, issue);
+                    }
                 }
             }
 
             int pendingAfterPush = await context.DatasyncOperationsQueue.CountAsync();
             _pendingCountSnapshot = pendingAfterPush;
+            AppendSyncTrace($"TrySyncAsync: pendingAfterPush={pendingAfterPush}.");
             if (pendingAfterPush > 0)
             {
-                _logger.LogWarning(
-                    "Skipping pull because {Count} pending operations remain in queue after push.",
-                    pendingAfterPush);
+                bool hasFailures = pushResult.FailedRequests.Count > 0;
+                bool allFailuresAreConflicts = hasFailures;
+                if (allFailuresAreConflicts)
+                {
+                    foreach (var failedRequest in pushResult.FailedRequests)
+                    {
+                        string detail = DescribeFailedRequest(failedRequest);
+                        bool isConflict = detail.Contains("IsConflictStatusCode=True", StringComparison.OrdinalIgnoreCase)
+                            || detail.Contains("StatusCode=409", StringComparison.Ordinal);
 
-                await LogQueueSnapshotAsync(context);
-                shouldScheduleRetry = true;
-                return false;
+                        if (!isConflict)
+                        {
+                            allFailuresAreConflicts = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (allFailuresAreConflicts)
+                {
+                    AppendSyncTrace("TrySyncAsync: pending queue contains conflict-only failures after push; continuing to pull for conflict convergence.");
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Skipping pull because {Count} pending operations remain in queue after push.",
+                        pendingAfterPush);
+
+                    await LogQueueSnapshotAsync(context);
+                    shouldScheduleRetry = true;
+                    return false;
+                }
             }
 
             PullResult pullResult = await context.PullAsync();
+            AppendSyncTrace($"TrySyncAsync: pull complete. success={pullResult.IsSuccessful}, failedRequests={pullResult.FailedRequests.Count}.");
             if (!pullResult.IsSuccessful)
             {
                 _logger.LogWarning("Datasync pull completed with {Count} failed requests.",
                     pullResult.FailedRequests.Count);
+                AppendSyncTrace($"TrySyncAsync: pull failedRequests={pullResult.FailedRequests.Count}.");
 
                 foreach (var failedRequest in pullResult.FailedRequests)
                 {
-                    _logger.LogWarning("Datasync pull failure detail: {FailedRequest}", DescribeFailedRequest(failedRequest));
+                    string detail = DescribeFailedRequest(failedRequest);
+                    _logger.LogWarning("Datasync pull failure detail: {FailedRequest}", detail);
+                    AppendSyncTrace($"TrySyncAsync: pull failure detail: {detail}");
                 }
 
                 shouldScheduleRetry = true;
@@ -432,6 +541,12 @@ public sealed class DatasyncSyncService : IDisposable
 
             int pendingAfterPull = await context.DatasyncOperationsQueue.CountAsync();
             _pendingCountSnapshot = pendingAfterPull;
+            AppendSyncTrace($"TrySyncAsync: pendingAfterPull={pendingAfterPull}.");
+
+            if (pendingAfterPull == 0)
+            {
+                _latestSyncIssue = null;
+            }
 
             if (pendingAfterPull > 0)
             {
@@ -449,6 +564,7 @@ public sealed class DatasyncSyncService : IDisposable
         catch (DatasyncException ex)
         {
             _logger.LogError(ex, "Datasync synchronization failed with DatasyncException: {Message}", ex.Message);
+            AppendSyncTrace($"TrySyncAsync: DatasyncException: {ex.Message}.");
 
             using IServiceScope diagnosticsScope = _scopeFactory.CreateScope();
             PlannerDbContext diagnosticsContext = diagnosticsScope.ServiceProvider.GetRequiredService<PlannerDbContext>();
@@ -459,6 +575,7 @@ public sealed class DatasyncSyncService : IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Datasync synchronization failed.");
+            AppendSyncTrace($"TrySyncAsync: Exception: {ex.Message}.");
             shouldScheduleRetry = await RefreshPendingCountSnapshotAsync();
             return false;
         }
@@ -470,6 +587,7 @@ public sealed class DatasyncSyncService : IDisposable
             }
 
             SyncCompleted?.Invoke(this, EventArgs.Empty);
+            AppendSyncTrace($"TrySyncAsync: completed. scheduleRetry={shouldScheduleRetry}, pendingSnapshot={_pendingCountSnapshot}.");
 
             if (shouldScheduleRetry)
             {
@@ -484,6 +602,7 @@ public sealed class DatasyncSyncService : IDisposable
         {
             using IServiceScope scope = _scopeFactory.CreateScope();
             PlannerDbContext context = scope.ServiceProvider.GetRequiredService<PlannerDbContext>();
+            await ConfigureSqliteLockBehaviorAsync(context);
             int count = await context.DatasyncOperationsQueue.CountAsync();
             _pendingCountSnapshot = count;
             return count > 0;
@@ -584,6 +703,13 @@ public sealed class DatasyncSyncService : IDisposable
         }
 
         return columns;
+    }
+
+    private static async Task ConfigureSqliteLockBehaviorAsync(PlannerDbContext context)
+    {
+        // Keep lock waits short so foreground local saves are not blocked behind long sync attempts.
+        context.Database.SetCommandTimeout(2);
+        await context.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout=1000;");
     }
 
     private static string DescribeFailedRequest(object failedRequest)
@@ -737,6 +863,213 @@ public sealed class DatasyncSyncService : IDisposable
         catch
         {
             return "<unavailable>";
+        }
+    }
+
+    private static bool TryCreateSyncIssueInfo(object failedRequest, out SyncIssueInfo info)
+    {
+        info = new SyncIssueInfo(null, null, null, null, null, null, false);
+
+        try
+        {
+            object? value = failedRequest.GetType().GetProperty("Value")?.GetValue(failedRequest);
+            if (value == null)
+            {
+                return false;
+            }
+
+            int? statusCode = TryGetStatusCode(value);
+            bool isConflict = statusCode == 409 || TryGetBooleanProperty(value, "IsConflictStatusCode");
+            string? reasonPhrase = value.GetType().GetProperty("ReasonPhrase")?.GetValue(value)?.ToString();
+
+            string? responseBody = TryReadResponseBody(value);
+            string? entityType = null;
+            string? entityId = null;
+            string? entityKey = null;
+            string? entityTitle = null;
+
+            if (!string.IsNullOrWhiteSpace(responseBody)
+                && TryParseEntityDetailsFromJson(
+                    responseBody!,
+                    out string? parsedType,
+                    out string? parsedId,
+                    out string? parsedKey,
+                    out string? parsedTitle))
+            {
+                entityType = parsedType;
+                entityId = parsedId;
+                entityKey = parsedKey;
+                entityTitle = parsedTitle;
+            }
+
+            info = new SyncIssueInfo(entityType, entityId, entityKey, entityTitle, statusCode, reasonPhrase, isConflict);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static int? TryGetStatusCode(object serviceResponse)
+    {
+        try
+        {
+            object? raw = serviceResponse.GetType().GetProperty("StatusCode")?.GetValue(serviceResponse);
+            if (raw == null)
+            {
+                return null;
+            }
+
+            if (raw is int code)
+            {
+                return code;
+            }
+
+            if (int.TryParse(raw.ToString(), out int parsed))
+            {
+                return parsed;
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static bool TryGetBooleanProperty(object source, string propertyName)
+    {
+        try
+        {
+            object? raw = source.GetType().GetProperty(propertyName)?.GetValue(source);
+            return raw is bool flag && flag;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string? TryReadResponseBody(object serviceResponse)
+    {
+        try
+        {
+            PropertyInfo? streamProp = serviceResponse.GetType().GetProperty("ContentStream");
+            if (streamProp == null)
+            {
+                return null;
+            }
+
+            if (streamProp.GetValue(serviceResponse) is not Stream stream || !stream.CanRead)
+            {
+                return null;
+            }
+
+            long originalPosition = 0;
+            if (stream.CanSeek)
+            {
+                originalPosition = stream.Position;
+                stream.Position = 0;
+            }
+
+            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+            string content = reader.ReadToEnd();
+
+            if (stream.CanSeek)
+            {
+                stream.Position = originalPosition;
+            }
+
+            return string.IsNullOrWhiteSpace(content) ? null : content;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static bool TryParseEntityDetailsFromJson(
+        string json,
+        out string? entityType,
+        out string? entityId,
+        out string? entityKey,
+        out string? entityTitle)
+    {
+        entityType = null;
+        entityId = null;
+        entityKey = null;
+        entityTitle = null;
+
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(json);
+            JsonElement root = document.RootElement;
+
+            if (root.TryGetProperty("id", out JsonElement idProp) && idProp.ValueKind == JsonValueKind.String)
+            {
+                entityId = idProp.GetString();
+            }
+
+            if (root.TryGetProperty("key", out JsonElement keyProp) && keyProp.ValueKind == JsonValueKind.String)
+            {
+                entityKey = keyProp.GetString();
+            }
+
+            if (root.TryGetProperty("title", out JsonElement titleProp) && titleProp.ValueKind == JsonValueKind.String)
+            {
+                entityTitle = titleProp.GetString();
+            }
+
+            if (root.TryGetProperty("parentTaskId", out _)
+                || root.TryGetProperty("priority", out _)
+                || root.TryGetProperty("status", out _))
+            {
+                entityType = "task";
+            }
+            else if (root.TryGetProperty("text", out _)
+                && root.TryGetProperty("order", out _)
+                && root.TryGetProperty("key", out _))
+            {
+                entityType = "note";
+            }
+            else if (root.TryGetProperty("normalizedName", out _)
+                || (root.TryGetProperty("name", out _) && !root.TryGetProperty("key", out _)))
+            {
+                entityType = "project";
+            }
+
+            return !string.IsNullOrWhiteSpace(entityId)
+                || !string.IsNullOrWhiteSpace(entityKey)
+                || !string.IsNullOrWhiteSpace(entityTitle);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+
+    private static void AppendSyncTrace(string message)
+    {
+        try
+        {
+            string? directory = Path.GetDirectoryName(SyncTraceLogPath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            string line = $"[{DateTimeOffset.Now:O}] {message}{Environment.NewLine}";
+            lock (SyncTraceGate)
+            {
+                File.AppendAllText(SyncTraceLogPath, line);
+            }
+        }
+        catch
+        {
+            // Diagnostics must never throw.
         }
     }
 }
