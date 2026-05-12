@@ -27,7 +27,7 @@
             <!-- Form -->
             <Border Grid.Row="2"
                     Style="{DynamicResource ThemedCard}"
-                    StrokeThickness="{DynamicResource DividerThickness}">
+                    StrokeThickness="{DynamicResource CardBorderThickness}">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="{DynamicResource ListCardCornerRadius}"/>
                 </Border.StrokeShape>

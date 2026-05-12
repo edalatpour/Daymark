@@ -31,8 +31,8 @@
 		<ApplicationId>com.edalatpour.ben</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0.7</ApplicationDisplayVersion>
-		<ApplicationVersion>7</ApplicationVersion>
+		<ApplicationDisplayVersion>1.0.8</ApplicationDisplayVersion>
+		<ApplicationVersion>8</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>MSIX</WindowsPackageType>
@@ -108,6 +108,10 @@
 	</PropertyGroup>
 
 	<!-- Windows platform target must match the inferred RuntimeIdentifier -->
+   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and ('$(Platform)' == 'AnyCPU' or '$(Platform)' == '')">
+		<PlatformTarget>arm64</PlatformTarget>
+		<RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+	</PropertyGroup>
 	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Platform)' == 'ARM64'">
 		<PlatformTarget>arm64</PlatformTarget>
 		<RuntimeIdentifier>win-arm64</RuntimeIdentifier>
@@ -124,14 +128,13 @@
 	<ItemGroup>
 		<!-- App Icon -->
 		<!-- <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" /> -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#0A1A2F" />
-
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#1A6B8A" />
 
 		<!-- Splash Screen -->
 		<!-- <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
 		<!-- <MauiSplashScreen Include="Resources\AppIcon\b.png" Color="#1F4E4B" /> -->
       	<!-- <MauiSplashScreen Include="Resources\Splash\hatteras_splash_ios.png" Color="#E5DCC5" BaseSize="512,512" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'" /> -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0A1A2F" BaseSize="384,384" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1A6B8A" BaseSize="384,384" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />

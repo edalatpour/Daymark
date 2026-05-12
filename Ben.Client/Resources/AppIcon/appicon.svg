@@ -1,64 +1,17 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="skyTone" x1="512" y1="0" x2="512" y2="683" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#BFE9FF"/>
-      <stop offset="0.48" stop-color="#8ED4FF"/>
-      <stop offset="1" stop-color="#73C6F4"/>
-    </linearGradient>
-    <radialGradient id="sunHaze" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(260 180) rotate(25) scale(330 220)">
-      <stop offset="0" stop-color="#FFF9DE" stop-opacity="0.65"/>
-      <stop offset="0.55" stop-color="#FFF3CF" stop-opacity="0.2"/>
-      <stop offset="1" stop-color="#FFF3CF" stop-opacity="0"/>
-    </radialGradient>
-    <!-- Warm bronze with bright sunlit accents from upper-left -->
-    <linearGradient id="bronzeSun" x1="180" y1="160" x2="860" y2="980" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#4B2A1A"/>
-      <stop offset="0.18" stop-color="#8A5B36"/>
-      <stop offset="0.4" stop-color="#D09A5D"/>
-      <stop offset="0.54" stop-color="#F4D08A"/>
-      <stop offset="0.7" stop-color="#AF7741"/>
-      <stop offset="1" stop-color="#5C341F"/>
-    </linearGradient>
-    <linearGradient id="sunGlint" x1="250" y1="200" x2="620" y2="560" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFF4D4" stop-opacity="0.95"/>
-      <stop offset="0.35" stop-color="#FFDFA6" stop-opacity="0.45"/>
-      <stop offset="1" stop-color="#FFDFA6" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="waterDepth" x1="512" y1="683" x2="512" y2="1024" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#4FB0E8"/>
-      <stop offset="0.55" stop-color="#2B82C4"/>
-      <stop offset="1" stop-color="#17598D"/>
-    </linearGradient>
-  </defs>
 
-  <rect width="1024" height="1024" fill="url(#skyTone)"/>
-  <ellipse cx="260" cy="180" rx="330" ry="220" fill="url(#sunHaze)"/>
+        <!-- Circle centered on canvas and slightly reduced in size -->
+        <circle cx="512" cy="512" r="300"
+          stroke="white"
+          stroke-width="80"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
 
-  <!-- Bottom third waterway treatment for the daymark context -->
-  <rect x="0" y="683" width="1024" height="341" fill="url(#waterDepth)"/>
-  <path d="M0 736 C96 724 160 748 256 736 C352 724 416 748 512 736 C608 724 672 748 768 736 C864 724 928 748 1024 736"
-        stroke="#BFE9FF" stroke-opacity="0.35" stroke-width="12" fill="none"/>
-  <path d="M0 800 C96 788 160 812 256 800 C352 788 416 812 512 800 C608 788 672 812 768 800 C864 788 928 812 1024 800"
-        stroke="#D8F2FF" stroke-opacity="0.22" stroke-width="10" fill="none"/>
-  <path d="M0 876 C96 864 160 888 256 876 C352 864 416 888 512 876 C608 864 672 888 768 876 C864 864 928 888 1024 876"
-        stroke="#A9DDFF" stroke-opacity="0.2" stroke-width="8" fill="none"/>
+  <!-- Pole extending to bottom edge -->
+        <line x1="512" y1="812" x2="512" y2="1024"
+        stroke="white"
+        stroke-width="80"
+        stroke-linecap="round"/>
 
-  <g stroke="url(#bronzeSun)" stroke-width="80" stroke-linejoin="round" stroke-linecap="round">
-    <!-- Inverted triangle with slightly rounded corners -->
-    <path d="M220 300 
-             L804 300 
-             L512 820 
-             Z"/>
-    <!-- Pole shortened so the mark stays inside standard icon safe area -->
-    <line x1="512" y1="820" x2="512" y2="980" />
-  </g>
-
-  <!-- Thin glint pass to mimic sunlight catching the metal -->
-  <g stroke="url(#sunGlint)" stroke-width="24" stroke-linejoin="round" stroke-linecap="round" opacity="0.75">
-    <path d="M220 300 
-             L804 300 
-             L512 820 
-             Z"/>
-    <line x1="512" y1="820" x2="512" y2="980" />
-  </g>
 </svg>

@@ -13,6 +13,12 @@
 
         <!-- Date Header -->
 
+        <views:TiledBackground Grid.Row="0"
+                               HeightRequest="128"
+                               ImageSource="{DynamicResource RootGridBackground}"
+                               TileSize="128"
+                               TileOpacity="{DynamicResource HeaderPatternOpacity}"/>
+
         <Grid RowDefinitions="Auto,Auto"
               RowSpacing="4"
               HorizontalOptions="Start"
@@ -25,22 +31,6 @@
                   WidthRequest="216"
                   HeightRequest="72">
                 <!-- <Border Style="{DynamicResource DaymarkHeaderBand}"/> -->
-
-                <HorizontalStackLayout>
-                    <Image Source="{DynamicResource RootGridBackground}"
-                           Opacity="0.25"
-                           HorizontalOptions="Start"
-                           VerticalOptions="Start"/>
-                    <Image Source="{DynamicResource RootGridBackground}"
-                           Opacity="0.25"
-                           HorizontalOptions="Start"
-                           VerticalOptions="Start"/>
-                    <Image Source="{DynamicResource RootGridBackground}"
-                           Opacity="0.25"
-                           HorizontalOptions="Start"
-                           VerticalOptions="Start"/>
-                </HorizontalStackLayout>
-
 
                 <Border Margin="10,8,0,8"
                         WidthRequest="84"
@@ -113,7 +103,7 @@
 
         <Border Grid.Row="2"
                 Style="{DynamicResource ThemedCard}"
-                StrokeThickness="{DynamicResource DividerThickness}">
+                StrokeThickness="{DynamicResource CardBorderThickness}">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="{DynamicResource ListCardCornerRadius}"/>
             </Border.StrokeShape>

@@ -13,21 +13,16 @@
 
         <!-- Date Header -->
 
+        <views:TiledBackground Grid.Row="0"
+                               HeightRequest="128"
+                               ImageSource="{DynamicResource RootGridBackground}"
+                               TileSize="128"
+                               TileOpacity="{DynamicResource HeaderPatternOpacity}"/>
+
         <Grid ColumnDefinitions="*,Auto"
               ColumnSpacing="12"
               HorizontalOptions="Fill"
               VerticalOptions="Start">
-
-            <Label Grid.Column="0"
-                   Text="{Binding DailyQuote}"
-                   IsVisible="{Binding ShowDailyQuote}"
-                   Style="{DynamicResource DateText}"
-                   FontSize="12"
-                   MaxLines="7"
-                   LineBreakMode="WordWrap"
-                   HorizontalOptions="Fill"
-                   HorizontalTextAlignment="Start"
-                   VerticalOptions="Start"/>
 
             <Grid Grid.Column="1"
                   RowDefinitions="Auto,Auto"
@@ -42,21 +37,6 @@
                       WidthRequest="220"
                       HeightRequest="72">
                     <!-- <Border Style="{DynamicResource DaymarkHeaderBand}"/> -->
-
-                    <HorizontalStackLayout>
-                        <Image Source="{DynamicResource RootGridBackground}"
-                               Opacity="0.25"
-                               HorizontalOptions="Start"
-                               VerticalOptions="Start"/>
-                        <Image Source="{DynamicResource RootGridBackground}"
-                               Opacity="0.25"
-                               HorizontalOptions="Start"
-                               VerticalOptions="Start"/>
-                        <Image Source="{DynamicResource RootGridBackground}"
-                               Opacity="0.25"
-                               HorizontalOptions="Start"
-                               VerticalOptions="Start"/>
-                    </HorizontalStackLayout>
 
                     <Border Margin="0,8,10,8"
                             WidthRequest="84"
@@ -121,7 +101,7 @@
 
         <Border Grid.Row="2"
                 Style="{DynamicResource ThemedCard}"
-                StrokeThickness="{DynamicResource DividerThickness}">
+                StrokeThickness="{DynamicResource CardBorderThickness}">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="{DynamicResource ListCardCornerRadius}"/>
             </Border.StrokeShape>

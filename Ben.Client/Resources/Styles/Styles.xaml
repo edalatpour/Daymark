@@ -167,7 +167,7 @@
                 <Setter Property="Stroke"
                         Value="{DynamicResource BorderColor}"/>
                 <Setter Property="StrokeThickness"
-                        Value="{DynamicResource BorderThickness}"/>
+                        Value="{DynamicResource CardBorderThickness}"/>
         </Style>
 
         <Style x:Key="ThemedCardCompact"

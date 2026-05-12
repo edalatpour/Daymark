@@ -34,6 +34,8 @@
     <Color x:Key="GridLineColor">#D0D0D0</Color>
     <Color x:Key="DividerColor">#D0D0D0</Color>
     <x:Double x:Key="BorderThickness">1</x:Double>
+
+    <x:Double x:Key="CardBorderThickness">0</x:Double>
     <x:Double x:Key="DividerThickness">1</x:Double>
     <x:Double x:Key="CornerRadius">6</x:Double>
     <Color x:Key="ButtonTextOnAccent">#1A1A1A</Color>
@@ -72,3 +74,4 @@
     <x:String x:Key="RootGridBackgroundAspect">Fill</x:String>
 
 </ResourceDictionary>
+

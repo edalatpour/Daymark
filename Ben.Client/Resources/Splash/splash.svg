@@ -1,12 +1,210 @@
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Group with thin stroke and rounded corners -->
-  <g stroke="white" stroke-width="80" stroke-linejoin="round" stroke-linecap="round">
-    <!-- Inverted triangle with slightly rounded corners -->
-    <path d="M160 256 
-             L864 256 
-             L512 896 
-             Z"/>
-    <!-- Pole (kept straight, but with rounded caps) -->
-    <line x1="512" y1="896" x2="512" y2="1152" />
-  </g>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:ns1="http://sozi.baierouge.fr"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    id="svg5668"
+    sodipodi:docname="chsym_buoy_swm_b.svg"
+    viewBox="-20 -20 97.973 165.28"
+    sodipodi:version="0.32"
+    version="1.0"
+    inkscape:output_extension="org.inkscape.output.svg.inkscape"
+    inkscape:version="0.46"
+  >
+  <sodipodi:namedview
+      id="base"
+      bordercolor="#666666"
+      inkscape:pageshadow="2"
+      inkscape:window-y="291"
+      pagecolor="#ffffff"
+      inkscape:window-height="811"
+      inkscape:zoom="0.35"
+      inkscape:window-x="1124"
+      showgrid="false"
+      borderopacity="1.0"
+      inkscape:current-layer="layer1"
+      inkscape:cx="350"
+      inkscape:cy="520"
+      inkscape:window-width="788"
+      inkscape:pageopacity="0.0"
+      inkscape:document-units="px"
+  />
+  <g
+      id="layer1"
+      inkscape:label="Ebene 1"
+      inkscape:groupmode="layer"
+      transform="translate(666.13 130.28)"
+    >
+    <g
+        id="g8115"
+        style="stroke:#ffffff;stroke-width:1.5;stroke-miterlimit:3.9879"
+        transform="translate(-844.14 -175.81)"
+      >
+      <path
+          id="path7982"
+          sodipodi:nodetypes="cc"
+          style="stroke:#ffffff;stroke-miterlimit:3.9879;stroke-width:1.5;fill:none"
+          d="m220.51 57.692l-13.05 106.21"
+      />
+      <g
+          id="g7986"
+          style="stroke:#ffffff;stroke-width:1.5;stroke-miterlimit:3.9879"
+          transform="translate(107.79 -70.666)"
+        >
+        <path
+            id="path7988"
+            style="stroke:#ffffff;stroke-miterlimit:3.9879;stroke-width:1.5;fill:none"
+            d="m70.756 237.48h25.065"
+        />
+        <path
+            id="path7990"
+            sodipodi:rx="3.0409236"
+            sodipodi:ry="3.2943337"
+            style="stroke:#ffffff;stroke-miterlimit:3.9879;stroke-width:1.5;fill:none"
+            sodipodi:type="arc"
+            d="m153.74 203.86a3.0409 3.2943 0 1 1 -6.09 0 3.0409 3.2943 0 1 1 6.09 0z"
+            transform="translate(-51.358 33.79)"
+            sodipodi:cy="203.86003"
+            sodipodi:cx="150.69466"
+        />
+        <path
+            id="path7992"
+            style="stroke:#ffffff;stroke-miterlimit:3.9879;stroke-width:1.5;fill:none"
+            d="m102.76 237.56h24.91"
+        />
+      </g
+      >
+      <path
+          id="path7994"
+          sodipodi:nodetypes="cccccc"
+          style="stroke:#ffffff;stroke-miterlimit:3.9879;stroke-width:1.5;fill:none"
+          d="m182.93 166.54l18.25-41.06 12.54-58.392 10.71 1.396-1 60.746 8.5 37.31"
+      />
+      <path
+          id="path8019"
+          sodipodi:rx="5.833631"
+          sodipodi:ry="5.833631"
+          style="stroke:#ffffff;stroke-miterlimit:3.9879;stroke-width:1.5;fill:none"
+          sodipodi:type="arc"
+          d="m253.85 36.073a5.8336 5.8336 0 1 1 -11.67 0 5.8336 5.8336 0 1 1 11.67 0z"
+          transform="translate(-27.224 15.824)"
+          sodipodi:cy="36.07296"
+          sodipodi:cx="248.0177"
+      />
+    </g
+    >
+  </g
+  >
+  <metadata
+    >
+    <rdf:RDF
+      >
+      <cc:Work
+        >
+        <dc:format
+          >image/svg+xml</dc:format
+        >
+        <dc:type
+            rdf:resource="http://purl.org/dc/dcmitype/StillImage"
+        />
+        <cc:license
+            rdf:resource="http://creativecommons.org/licenses/publicdomain/"
+        />
+        <dc:publisher
+          >
+          <cc:Agent
+              rdf:about="http://openclipart.org/"
+            >
+            <dc:title
+              >Openclipart</dc:title
+            >
+          </cc:Agent
+          >
+        </dc:publisher
+        >
+        <dc:title
+          >buoy safe water mark</dc:title
+        >
+        <dc:date
+          >2010-06-11T21:27:38</dc:date
+        >
+        <dc:description
+          >sea chart symbol, buoy, safe water mark</dc:description
+        >
+        <dc:source
+          >https://openclipart.org/detail/66049/buoy-safe-water-mark-by-seafish</dc:source
+        >
+        <dc:creator
+          >
+          <cc:Agent
+            >
+            <dc:title
+              >seafish</dc:title
+            >
+          </cc:Agent
+          >
+        </dc:creator
+        >
+        <dc:subject
+          >
+          <rdf:Bag
+            >
+            <rdf:li
+              >buoy</rdf:li
+            >
+            <rdf:li
+              >chart</rdf:li
+            >
+            <rdf:li
+              >mark</rdf:li
+            >
+            <rdf:li
+              >navigation</rdf:li
+            >
+            <rdf:li
+              >safe</rdf:li
+            >
+            <rdf:li
+              >sailing</rdf:li
+            >
+            <rdf:li
+              >sea</rdf:li
+            >
+            <rdf:li
+              >symbol</rdf:li
+            >
+            <rdf:li
+              >water</rdf:li
+            >
+          </rdf:Bag
+          >
+        </dc:subject
+        >
+      </cc:Work
+      >
+      <cc:License
+          rdf:about="http://creativecommons.org/licenses/publicdomain/"
+        >
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#Reproduction"
+        />
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#Distribution"
+        />
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#DerivativeWorks"
+        />
+      </cc:License
+      >
+    </rdf:RDF
+    >
+  </metadata
+  >
 </svg>
