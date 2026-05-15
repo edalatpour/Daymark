@@ -50,6 +50,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ExternalIdAuthService>();
         builder.Services.AddSingleton<IUnifiedAuthSessionStore, PreferencesUnifiedAuthSessionStore>();
         builder.Services.AddSingleton<IUnifiedAuthService, UnifiedAuthService>();
+        builder.Services.AddSingleton<IAuthenticationLifecycleCoordinator, AuthenticationLifecycleCoordinator>();
         builder.Services.AddSingleton<IThemeIdentityService, NoOpThemeIdentityService>();
         builder.Services.AddSingleton<ThemeService>();
         builder.Services.AddSingleton<UserFontService>();
