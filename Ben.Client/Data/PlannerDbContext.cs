@@ -5,25 +5,23 @@ using CommunityToolkit.Datasync.Client.Offline;
 using Microsoft.EntityFrameworkCore;
 using Ben.Models;
 using Ben.Services;
+using Ben.Services.Auth;
 
 namespace Ben.Data;
 
 public class PlannerDbContext : OfflineDbContext
 {
     private readonly DatasyncOptions _options;
-    private readonly AuthenticationService _authService;
-    private readonly ExternalIdAuthService _externalIdAuthService;
+    private readonly IUnifiedAuthService _unifiedAuthService;
 
     public PlannerDbContext(
         DbContextOptions<PlannerDbContext> options,
         DatasyncOptions datasyncOptions,
-        AuthenticationService authService,
-        ExternalIdAuthService externalIdAuthService)
+        IUnifiedAuthService unifiedAuthService)
         : base(options)
     {
         _options = datasyncOptions;
-        _authService = authService;
-        _externalIdAuthService = externalIdAuthService;
+        _unifiedAuthService = unifiedAuthService;
     }
 
     public DbSet<TaskItem> Tasks { get; set; }
@@ -53,9 +51,7 @@ public class PlannerDbContext : OfflineDbContext
             return;
         }
 
-        // AuthenticatedHttpHandler (injected via DI) adds the Bearer token to outgoing requests.
-        // GetUnifiedAuthenticationTokenAsync routes to whichever identity provider is currently
-        // active: Microsoft (MSAL) or External ID (Apple / Google).
+        // Datasync always requests tokens through the unified auth runtime.
         HttpClientOptions clientOptions = new()
         {
             Endpoint = _options.Endpoint,
@@ -84,25 +80,14 @@ public class PlannerDbContext : OfflineDbContext
     }
 
     /// <summary>
-    /// Returns an <see cref="AuthenticationToken"/> from whichever identity provider
-    /// the user is currently signed in with:
-    /// <list type="bullet">
-    ///   <item>If signed in with Microsoft (MSAL), delegates to
-    ///   <see cref="AuthenticationService.GetAuthenticationTokenAsync"/>.</item>
-    ///   <item>If signed in with Apple or Google (External ID / CIAM), delegates to
-    ///   <see cref="ExternalIdAuthService.GetAuthenticationTokenAsync"/>.</item>
-    /// </list>
+    /// Returns an <see cref="AuthenticationToken"/> from the active provider via the
+    /// unified authentication service.
     /// Called by the Datasync <see cref="GenericAuthenticationProvider"/> on every
     /// outgoing HTTP request so the backend can identify and filter data for the user.
     /// </summary>
     private Task<AuthenticationToken> GetUnifiedAuthenticationTokenAsync(CancellationToken cancellationToken)
     {
-        // External ID (Apple/Google) takes priority when both could be set;
-        // in practice only one provider is active at a time.
-        if (_externalIdAuthService.IsAuthenticated)
-            return _externalIdAuthService.GetAuthenticationTokenAsync(cancellationToken);
-
-        return _authService.GetAuthenticationTokenAsync(cancellationToken);
+        return _unifiedAuthService.GetAuthenticationTokenAsync(cancellationToken);
     }
 
     /// <summary>

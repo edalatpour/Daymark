@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Networking;
 using Ben.Data;
+using Ben.Services.Auth;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -35,8 +36,7 @@ public sealed class DatasyncSyncService : IDisposable
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConnectivity _connectivity;
-    private readonly AuthenticationService _authService;
-    private readonly ExternalIdAuthService _externalIdAuthService;
+    private readonly IUnifiedAuthService _unifiedAuthService;
     private readonly DatasyncOptions _options;
     private readonly ILogger<DatasyncSyncService> _logger;
     private readonly SqliteWriteCoordinator _sqliteWriteCoordinator;
@@ -60,16 +60,14 @@ public sealed class DatasyncSyncService : IDisposable
     public DatasyncSyncService(
         IServiceScopeFactory scopeFactory,
         IConnectivity connectivity,
-        AuthenticationService authService,
-        ExternalIdAuthService externalIdAuthService,
+        IUnifiedAuthService unifiedAuthService,
         DatasyncOptions options,
         ILogger<DatasyncSyncService> logger,
         SqliteWriteCoordinator sqliteWriteCoordinator)
     {
         _scopeFactory = scopeFactory;
         _connectivity = connectivity;
-        _authService = authService;
-        _externalIdAuthService = externalIdAuthService;
+        _unifiedAuthService = unifiedAuthService;
         _options = options;
         _logger = logger;
         _sqliteWriteCoordinator = sqliteWriteCoordinator;
@@ -77,10 +75,9 @@ public sealed class DatasyncSyncService : IDisposable
 
     /// <summary>
     /// Returns <c>true</c> when the user is signed in with any identity provider
-    /// (Microsoft via MSAL, Apple or Google via External ID).
+    /// through the unified authentication runtime.
     /// </summary>
-    private bool IsAnyAuthenticated =>
-        _authService.IsAuthenticated || _externalIdAuthService.IsAuthenticated;
+    private bool IsAnyAuthenticated => _unifiedAuthService.IsAuthenticated;
 
     public void Start()
     {
