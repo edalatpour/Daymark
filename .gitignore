@@ -14,3 +14,4 @@ publish/Ben.Client.ipa
 publish/Packaging.log
 .DS_Store
 *.ips
+publish/DistributionSummary.plist
