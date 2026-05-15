@@ -24,7 +24,7 @@
                 <Setter Property="VerticalTextAlignment"
                         Value="Center"/>
                 <Setter Property="TextColor"
-                        Value="{DynamicResource Ink}"/>
+                        Value="{DynamicResource UserText}"/>
         </Style>
 
         <Style x:Key="HandwritingEntry"

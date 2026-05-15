@@ -27,14 +27,22 @@ public partial class SettingsPage : ContentPage
         "ListCardCornerRadius",
     };
 
-    private string _originalTheme = "Hatteras";
-    private string _selectedTheme = "Hatteras";
+    private string _originalTheme = "Blue";
+    private string _selectedTheme = "Blue";
     private string _selectedUserFont = "PatrickHand";
     private readonly ThemeService _themeService;
     private readonly UserFontService _userFontService;
     private readonly DailyViewModel _dailyViewModel;
     private readonly List<ThemeOption> _availableThemes = new()
     {
+        new ThemeOption { Name = "Red",          DisplayName = "Red" },
+        new ThemeOption { Name = "Orange",       DisplayName = "Orange" },
+        new ThemeOption { Name = "Yellow",       DisplayName = "Yellow" },
+        new ThemeOption { Name = "Green",        DisplayName = "Green" },
+        new ThemeOption { Name = "Blue",         DisplayName = "Blue" },
+        new ThemeOption { Name = "Purple",       DisplayName = "Purple" },
+        new ThemeOption { Name = "Brown",        DisplayName = "Brown" },
+        new ThemeOption { Name = "Gray",         DisplayName = "Gray" },
         new ThemeOption { Name = "Bodie",        DisplayName = "Bodie" },
         new ThemeOption { Name = "CapeLookout",  DisplayName = "Cape Lookout" },
         new ThemeOption { Name = "Currituck",    DisplayName = "Currituck" },

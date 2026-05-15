@@ -32,7 +32,7 @@
                   HeightRequest="72">
                 <!-- <Border Style="{DynamicResource DaymarkHeaderBand}"/> -->
 
-                <Border Margin="10,8,0,8"
+                <Border Margin="0,8,0,8"
                         WidthRequest="84"
                         HorizontalOptions="Start"
                         Style="{DynamicResource DaymarkDateBadge}">
@@ -157,8 +157,7 @@
                                                MaxLines="1"
                                                HorizontalTextAlignment="Center"
                                                VerticalTextAlignment="Start"
-                                               Style="{StaticResource Handwriting}"
-                                               TextColor="{DynamicResource Ink}"/>
+                                               Style="{StaticResource Handwriting}"/>
 
                                         <Label Grid.Column="2"
                                                Margin="{OnPlatform iOS='0,2,0,3', Default='0,2,0,3'}"
@@ -170,8 +169,7 @@
                                             <Label.FormattedText>
                                                 <FormattedString>
                                                     <Span Text="{Binding Title}"
-                                                          Style="{StaticResource Handwriting}"
-                                                          TextColor="{DynamicResource Ink}"/>
+                                                          Style="{StaticResource Handwriting}"/>
                                                     <Span Text="{Binding ForwardedFromDate, StringFormat=' ({0})', TargetNullValue=''}"
                                                           Style="{StaticResource Handwriting}"
                                                           TextColor="{DynamicResource Accent}"/>

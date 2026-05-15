@@ -23,7 +23,7 @@ namespace Ben.ViewModels;
 public class DailyViewModel : INotifyPropertyChanged
 {
     private const int MaxProjectNameLength = 128;
-    private const string QuotesAssetPath = "Quotes/benjamin_franklin.csv";
+    // private const string QuotesAssetPath = "Quotes/benjamin_franklin.csv";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -35,8 +35,8 @@ public class DailyViewModel : INotifyPropertyChanged
     private readonly LocalSchemaDbContext _schemaDbContext;
     private readonly IConnectivity _connectivity;
     private readonly SemaphoreSlim _refreshAfterSyncLock = new(1, 1);
-    private readonly List<string> _quotes = [];
-    private bool _quotesLoaded;
+    // private readonly List<string> _quotes = [];
+    // private bool _quotesLoaded;
     private bool _isSyncing;
     private SyncIssueInfo? _lastSyncIssue;
     private string _currentProjectName = string.Empty;
@@ -637,8 +637,8 @@ public class DailyViewModel : INotifyPropertyChanged
         // day.Tasks.Add(new TaskItem { Status = "C", Priority = "A", Order = 2, Title = "Also important" });
         // day.Tasks.Add(new TaskItem { Status = "I", Priority = "A", Order = 1, Title = "The most important thing" });
         // day.Notes.Add(new NoteItem { Text = "I like this!"});
-        CurrentDay = day;
-        await UpdateDailyQuoteAsync(key);
+        // CurrentDay = day;
+        // await UpdateDailyQuoteAsync(key);
         // CurrentDay = new DailyData
         // {
         //     Date = date,
@@ -658,222 +658,222 @@ public class DailyViewModel : INotifyPropertyChanged
         // };
     }
 
-    private async Task UpdateDailyQuoteAsync(string key)
-    {
-        if (!KeyConvention.TryParseDateKey(key, out DateTime date))
-        {
-            DailyQuote = string.Empty;
-            return;
-        }
+    // private async Task UpdateDailyQuoteAsync(string key)
+    // {
+    //     if (!KeyConvention.TryParseDateKey(key, out DateTime date))
+    //     {
+    //         DailyQuote = string.Empty;
+    //         return;
+    //     }
 
-        await EnsureQuotesLoadedAsync();
-        DailyQuote = FormatQuoteForDisplay(GetQuoteForDate(date));
-    }
+    //     await EnsureQuotesLoadedAsync();
+    //     DailyQuote = FormatQuoteForDisplay(GetQuoteForDate(date));
+    // }
 
-    private async Task EnsureQuotesLoadedAsync()
-    {
-        if (_quotesLoaded)
-        {
-            return;
-        }
+    // private async Task EnsureQuotesLoadedAsync()
+    // {
+    //     if (_quotesLoaded)
+    //     {
+    //         return;
+    //     }
 
-        try
-        {
-            using Stream stream = await FileSystem.OpenAppPackageFileAsync(QuotesAssetPath);
-            using StreamReader reader = new(stream);
+    //     try
+    //     {
+    //         using Stream stream = await FileSystem.OpenAppPackageFileAsync(QuotesAssetPath);
+    //         using StreamReader reader = new(stream);
 
-            while (true)
-            {
-                string? line = await reader.ReadLineAsync();
-                if (line is null)
-                {
-                    break;
-                }
+    //         while (true)
+    //         {
+    //             string? line = await reader.ReadLineAsync();
+    //             if (line is null)
+    //             {
+    //                 break;
+    //             }
 
-                if (string.IsNullOrWhiteSpace(line))
-                {
-                    continue;
-                }
+    //             if (string.IsNullOrWhiteSpace(line))
+    //             {
+    //                 continue;
+    //             }
 
-                string trimmed = line.Trim().Trim('\uFEFF');
-                if (string.Equals(trimmed, "\"quote\"", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(trimmed, "quote", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
+    //             string trimmed = line.Trim().Trim('\uFEFF');
+    //             if (string.Equals(trimmed, "\"quote\"", StringComparison.OrdinalIgnoreCase)
+    //                 || string.Equals(trimmed, "quote", StringComparison.OrdinalIgnoreCase))
+    //             {
+    //                 continue;
+    //             }
 
-                string quote = ParseCsvQuoteValue(trimmed);
-                if (!string.IsNullOrWhiteSpace(quote))
-                {
-                    _quotes.Add(quote);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to load quotes asset: {ex.Message}");
-        }
+    //             string quote = ParseCsvQuoteValue(trimmed);
+    //             if (!string.IsNullOrWhiteSpace(quote))
+    //             {
+    //                 _quotes.Add(quote);
+    //             }
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Failed to load quotes asset: {ex.Message}");
+    //     }
 
-        if (_quotes.Count == 0)
-        {
-            _quotes.Add("Well done is better than well said.");
-        }
+    //     if (_quotes.Count == 0)
+    //     {
+    //         _quotes.Add("Well done is better than well said.");
+    //     }
 
-        _quotesLoaded = true;
-    }
+    //     _quotesLoaded = true;
+    // }
 
-    private static string ParseCsvQuoteValue(string value)
-    {
-        string text = value.Trim();
-        if (text.Length >= 2 && text[0] == '"' && text[^1] == '"')
-        {
-            text = text[1..^1];
-        }
+    // private static string ParseCsvQuoteValue(string value)
+    // {
+    //     string text = value.Trim();
+    //     if (text.Length >= 2 && text[0] == '"' && text[^1] == '"')
+    //     {
+    //         text = text[1..^1];
+    //     }
 
-        return text.Replace("\"\"", "\"").Trim();
-    }
+    //     return text.Replace("\"\"", "\"").Trim();
+    // }
 
-    private static string FormatQuoteForDisplay(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return string.Empty;
-        }
+    // private static string FormatQuoteForDisplay(string? text)
+    // {
+    //     if (string.IsNullOrWhiteSpace(text))
+    //     {
+    //         return string.Empty;
+    //     }
 
-        string trimmed = text.Trim();
+    //     string trimmed = text.Trim();
 
-        // Normalize common outer quote characters so display always uses smart quotes.
-        if (trimmed.Length >= 2)
-        {
-            char first = trimmed[0];
-            char last = trimmed[^1];
-            bool hasOuterQuotes =
-                (first == '"' && last == '"') ||
-                (first == '\'' && last == '\'') ||
-                (first == '“' && last == '”') ||
-                (first == '‘' && last == '’');
+    //     // Normalize common outer quote characters so display always uses smart quotes.
+    //     if (trimmed.Length >= 2)
+    //     {
+    //         char first = trimmed[0];
+    //         char last = trimmed[^1];
+    //         bool hasOuterQuotes =
+    //             (first == '"' && last == '"') ||
+    //             (first == '\'' && last == '\'') ||
+    //             (first == '“' && last == '”') ||
+    //             (first == '‘' && last == '’');
 
-            if (hasOuterQuotes)
-            {
-                trimmed = trimmed[1..^1].Trim();
-            }
-        }
+    //         if (hasOuterQuotes)
+    //         {
+    //             trimmed = trimmed[1..^1].Trim();
+    //         }
+    //     }
 
-        return $"“{trimmed}”";
-    }
+    //     return $"“{trimmed}”";
+    // }
 
-    private string GetQuoteForDate(DateTime date)
-    {
-        string? holidayQuote = GetHolidayQuote(date);
-        if (!string.IsNullOrWhiteSpace(holidayQuote))
-        {
-            return holidayQuote;
-        }
+    // private string GetQuoteForDate(DateTime date)
+    // {
+    //     string? holidayQuote = GetHolidayQuote(date);
+    //     if (!string.IsNullOrWhiteSpace(holidayQuote))
+    //     {
+    //         return holidayQuote;
+    //     }
 
-        HashSet<string> reservedHolidayQuotes = GetReservedHolidayQuotes(date.Year);
-        List<string> regularQuotes = _quotes
-            .Where(q => !reservedHolidayQuotes.Contains(q))
-            .ToList();
+    //     HashSet<string> reservedHolidayQuotes = GetReservedHolidayQuotes(date.Year);
+    //     List<string> regularQuotes = _quotes
+    //         .Where(q => !reservedHolidayQuotes.Contains(q))
+    //         .ToList();
 
-        if (regularQuotes.Count == 0)
-        {
-            int fallbackIndex = Math.Max(0, date.DayOfYear - 1) % _quotes.Count;
-            return _quotes[fallbackIndex];
-        }
+    //     if (regularQuotes.Count == 0)
+    //     {
+    //         int fallbackIndex = Math.Max(0, date.DayOfYear - 1) % _quotes.Count;
+    //         return _quotes[fallbackIndex];
+    //     }
 
-        int nonHolidayOrdinal = GetNonHolidayOrdinalInYear(date);
-        int index = nonHolidayOrdinal % regularQuotes.Count;
-        return regularQuotes[index];
-    }
+    //     int nonHolidayOrdinal = GetNonHolidayOrdinalInYear(date);
+    //     int index = nonHolidayOrdinal % regularQuotes.Count;
+    //     return regularQuotes[index];
+    // }
 
-    private HashSet<string> GetReservedHolidayQuotes(int year)
-    {
-        HashSet<string> reserved = new(StringComparer.Ordinal);
+    // private HashSet<string> GetReservedHolidayQuotes(int year)
+    // {
+    //     HashSet<string> reserved = new(StringComparer.Ordinal);
 
-        DateTime[] holidayDates =
-        [
-            new DateTime(year, 1, 1),
-            new DateTime(year, 7, 4),
-            new DateTime(year, 12, 25),
-            GetThanksgivingDate(year)
-        ];
+    //     DateTime[] holidayDates =
+    //     [
+    //         new DateTime(year, 1, 1),
+    //         new DateTime(year, 7, 4),
+    //         new DateTime(year, 12, 25),
+    //         GetThanksgivingDate(year)
+    //     ];
 
-        foreach (DateTime holidayDate in holidayDates)
-        {
-            string? holidayQuote = GetHolidayQuote(holidayDate);
-            if (!string.IsNullOrWhiteSpace(holidayQuote))
-            {
-                reserved.Add(holidayQuote);
-            }
-        }
+    //     foreach (DateTime holidayDate in holidayDates)
+    //     {
+    //         string? holidayQuote = GetHolidayQuote(holidayDate);
+    //         if (!string.IsNullOrWhiteSpace(holidayQuote))
+    //         {
+    //             reserved.Add(holidayQuote);
+    //         }
+    //     }
 
-        return reserved;
-    }
+    //     return reserved;
+    // }
 
-    private int GetNonHolidayOrdinalInYear(DateTime date)
-    {
-        DateTime cursor = new(date.Year, 1, 1);
-        int ordinal = -1;
+    // private int GetNonHolidayOrdinalInYear(DateTime date)
+    // {
+    //     DateTime cursor = new(date.Year, 1, 1);
+    //     int ordinal = -1;
 
-        while (cursor <= date)
-        {
-            if (GetHolidayQuote(cursor) is null)
-            {
-                ordinal++;
-            }
+    //     while (cursor <= date)
+    //     {
+    //         if (GetHolidayQuote(cursor) is null)
+    //         {
+    //             ordinal++;
+    //         }
 
-            cursor = cursor.AddDays(1);
-        }
+    //         cursor = cursor.AddDays(1);
+    //     }
 
-        return Math.Max(0, ordinal);
-    }
+    //     return Math.Max(0, ordinal);
+    // }
 
-    private string? GetHolidayQuote(DateTime date)
-    {
-        if (date.Month == 1 && date.Day == 1)
-        {
-            return "Be at war with your vices, at peace with your neighbors, and let every new year find you a better man.";
-        }
+    // private string? GetHolidayQuote(DateTime date)
+    // {
+    //     if (date.Month == 1 && date.Day == 1)
+    //     {
+    //         return "Be at war with your vices, at peace with your neighbors, and let every new year find you a better man.";
+    //     }
 
-        if (date.Month == 7 && date.Day == 4)
-        {
-            return "Where liberty is, there is my country.";
-        }
+    //     if (date.Month == 7 && date.Day == 4)
+    //     {
+    //         return "Where liberty is, there is my country.";
+    //     }
 
-        if (date.Month == 12 && date.Day == 25)
-        {
-            return "A good conscience is a continual Christmas.";
-        }
+    //     if (date.Month == 12 && date.Day == 25)
+    //     {
+    //         return "A good conscience is a continual Christmas.";
+    //     }
 
-        if (IsThanksgiving(date))
-        {
-            return "When befriended, remember it: When you befriend, forget it.";
-        }
+    //     if (IsThanksgiving(date))
+    //     {
+    //         return "When befriended, remember it: When you befriend, forget it.";
+    //     }
 
-        return null;
-    }
+    //     return null;
+    // }
 
-    private static bool IsThanksgiving(DateTime date)
-    {
-        if (date.Month != 11 || date.DayOfWeek != DayOfWeek.Thursday)
-        {
-            return false;
-        }
+    // private static bool IsThanksgiving(DateTime date)
+    // {
+    //     if (date.Month != 11 || date.DayOfWeek != DayOfWeek.Thursday)
+    //     {
+    //         return false;
+    //     }
 
-        int thursdayCount = (date.Day - 1) / 7 + 1;
-        return thursdayCount == 4;
-    }
+    //     int thursdayCount = (date.Day - 1) / 7 + 1;
+    //     return thursdayCount == 4;
+    // }
 
-    private static DateTime GetThanksgivingDate(int year)
-    {
-        DateTime date = new(year, 11, 1);
-        while (date.DayOfWeek != DayOfWeek.Thursday)
-        {
-            date = date.AddDays(1);
-        }
+    // private static DateTime GetThanksgivingDate(int year)
+    // {
+    //     DateTime date = new(year, 11, 1);
+    //     while (date.DayOfWeek != DayOfWeek.Thursday)
+    //     {
+    //         date = date.AddDays(1);
+    //     }
 
-        return date.AddDays(21);
-    }
+    //     return date.AddDays(21);
+    // }
 
     public async Task AddTaskAsync(string text)
     {
