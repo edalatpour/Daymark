@@ -633,11 +633,9 @@ public class DailyViewModel : INotifyPropertyChanged
         _currentProjectName = await _repo.GetProjectNameByKeyAsync(key) ?? string.Empty;
 
         DailyData day = await _repo.LoadPageAsync(key);
-        // day.Tasks.Add(new TaskItem { Status = "I", Priority = "A", Order = 1, Title = "The most important thing" });
-        // day.Tasks.Add(new TaskItem { Status = "C", Priority = "A", Order = 2, Title = "Also important" });
-        // day.Tasks.Add(new TaskItem { Status = "I", Priority = "A", Order = 1, Title = "The most important thing" });
-        // day.Notes.Add(new NoteItem { Text = "I like this!"});
-        // CurrentDay = day;
+
+        CurrentDay = day;
+
         // await UpdateDailyQuoteAsync(key);
         // CurrentDay = new DailyData
         // {
