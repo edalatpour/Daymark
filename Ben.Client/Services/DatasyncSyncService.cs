@@ -27,7 +27,7 @@ public sealed class DatasyncSyncService : IDisposable
     private static readonly TimeSpan RetryInterval = TimeSpan.FromSeconds(20);
     private static readonly TimeSpan WriteGateBusyRetryInterval = TimeSpan.FromSeconds(1);
 
-    private static readonly TimeSpan PendingChangesSyncInterval = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan PendingChangesSyncInterval = TimeSpan.FromSeconds(30);
     private static readonly string SyncTraceLogPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Ben",
@@ -208,15 +208,7 @@ public sealed class DatasyncSyncService : IDisposable
                     continue;
                 }
 
-                int pendingCount = await GetUnsyncedChangesCountAsync();
-                if (pendingCount <= 0)
-                {
-                    continue;
-                }
-
-                _logger.LogInformation(
-                    "Periodic sync tick found {Count} pending operations. Attempting sync.",
-                    pendingCount);
+                _logger.LogInformation("Periodic sync tick attempting sync.");
 
                 await TrySyncAsync();
             }
@@ -476,65 +468,80 @@ public sealed class DatasyncSyncService : IDisposable
             {
                 // Gate is held throughout push/pull to prevent concurrent repository writes.
                 // Repository SaveChangesAsync will block until gate is released in finally block.
-                PushResult pushResult = await context.PushAsync();
-                AppendSyncTrace($"TrySyncAsync: push complete. success={pushResult.IsSuccessful}, failedRequests={pushResult.FailedRequests.Count}.");
-                if (!pushResult.IsSuccessful)
+                int pendingBeforeSync = await context.DatasyncOperationsQueue.CountAsync();
+                _pendingCountSnapshot = pendingBeforeSync;
+                bool hasLocalPendingChanges = pendingBeforeSync > 0;
+                AppendSyncTrace($"TrySyncAsync: pendingBeforeSync={pendingBeforeSync}.");
+
+                bool pushSucceeded = true;
+
+                if (hasLocalPendingChanges)
                 {
-                    _logger.LogWarning("Datasync push completed with {Count} failed requests.",
-                        pushResult.FailedRequests.Count);
-                    AppendSyncTrace($"TrySyncAsync: push failedRequests={pushResult.FailedRequests.Count}.");
-
-                    foreach (var failedRequest in pushResult.FailedRequests)
+                    PushResult pushResult = await context.PushAsync();
+                    pushSucceeded = pushResult.IsSuccessful;
+                    AppendSyncTrace($"TrySyncAsync: push complete. success={pushResult.IsSuccessful}, failedRequests={pushResult.FailedRequests.Count}.");
+                    if (!pushResult.IsSuccessful)
                     {
-                        string detail = DescribeFailedRequest(failedRequest);
-                        _logger.LogWarning("Datasync push failure detail: {FailedRequest}", detail);
-                        AppendSyncTrace($"TrySyncAsync: push failure detail: {detail}");
+                        _logger.LogWarning("Datasync push completed with {Count} failed requests.",
+                            pushResult.FailedRequests.Count);
+                        AppendSyncTrace($"TrySyncAsync: push failedRequests={pushResult.FailedRequests.Count}.");
 
-                        if (TryCreateSyncIssueInfo(failedRequest, out SyncIssueInfo issue))
-                        {
-                            _latestSyncIssue = issue;
-                            SyncIssueDetected?.Invoke(this, issue);
-                        }
-                    }
-                }
-
-                int pendingAfterPush = await context.DatasyncOperationsQueue.CountAsync();
-                _pendingCountSnapshot = pendingAfterPush;
-                AppendSyncTrace($"TrySyncAsync: pendingAfterPush={pendingAfterPush}.");
-                if (pendingAfterPush > 0)
-                {
-                    bool hasFailures = pushResult.FailedRequests.Count > 0;
-                    bool allFailuresAreConflicts = hasFailures;
-                    if (allFailuresAreConflicts)
-                    {
                         foreach (var failedRequest in pushResult.FailedRequests)
                         {
                             string detail = DescribeFailedRequest(failedRequest);
-                            bool isConflict = detail.Contains("IsConflictStatusCode=True", StringComparison.OrdinalIgnoreCase)
-                                || detail.Contains("StatusCode=409", StringComparison.Ordinal);
+                            _logger.LogWarning("Datasync push failure detail: {FailedRequest}", detail);
+                            AppendSyncTrace($"TrySyncAsync: push failure detail: {detail}");
 
-                            if (!isConflict)
+                            if (TryCreateSyncIssueInfo(failedRequest, out SyncIssueInfo issue))
                             {
-                                allFailuresAreConflicts = false;
-                                break;
+                                _latestSyncIssue = issue;
+                                SyncIssueDetected?.Invoke(this, issue);
                             }
                         }
                     }
 
-                    if (allFailuresAreConflicts)
+                    int pendingAfterPush = await context.DatasyncOperationsQueue.CountAsync();
+                    _pendingCountSnapshot = pendingAfterPush;
+                    AppendSyncTrace($"TrySyncAsync: pendingAfterPush={pendingAfterPush}.");
+                    if (pendingAfterPush > 0)
                     {
-                        AppendSyncTrace("TrySyncAsync: pending queue contains conflict-only failures after push; continuing to pull for conflict convergence.");
-                    }
-                    else
-                    {
-                        _logger.LogWarning(
-                            "Skipping pull because {Count} pending operations remain in queue after push.",
-                            pendingAfterPush);
+                        bool hasFailures = pushResult.FailedRequests.Count > 0;
+                        bool allFailuresAreConflicts = hasFailures;
+                        if (allFailuresAreConflicts)
+                        {
+                            foreach (var failedRequest in pushResult.FailedRequests)
+                            {
+                                string detail = DescribeFailedRequest(failedRequest);
+                                bool isConflict = detail.Contains("IsConflictStatusCode=True", StringComparison.OrdinalIgnoreCase)
+                                    || detail.Contains("StatusCode=409", StringComparison.Ordinal);
 
-                        await LogQueueSnapshotAsync(context);
-                        shouldScheduleRetry = true;
-                        return false;
+                                if (!isConflict)
+                                {
+                                    allFailuresAreConflicts = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (allFailuresAreConflicts)
+                        {
+                            AppendSyncTrace("TrySyncAsync: pending queue contains conflict-only failures after push; continuing to pull for conflict convergence.");
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "Skipping pull because {Count} pending operations remain in queue after push.",
+                                pendingAfterPush);
+
+                            await LogQueueSnapshotAsync(context);
+                            shouldScheduleRetry = true;
+                            return false;
+                        }
                     }
+                }
+                else
+                {
+                    AppendSyncTrace("TrySyncAsync: no local pending changes; skipping push and running pull-only.");
                 }
 
                 // Re-check suppression after push. A local save may have requested sync suppression
@@ -580,7 +587,7 @@ public sealed class DatasyncSyncService : IDisposable
                     shouldScheduleRetry = true;
                 }
 
-                bool success = pushResult.IsSuccessful && pullResult.IsSuccessful;
+                bool success = pushSucceeded && pullResult.IsSuccessful;
                 if (!success)
                 {
                     shouldScheduleRetry = true;

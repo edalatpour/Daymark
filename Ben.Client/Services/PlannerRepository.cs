@@ -148,6 +148,11 @@ public class PlannerRepository
             _db.Tasks.Add(task);
             await _db.SaveChangesAsync();
         }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("add-task", ex);
+            throw;
+        }
         finally
         {
             ReleaseWriteAccess();
@@ -280,6 +285,11 @@ public class PlannerRepository
             _db.Projects.Add(project);
             await _db.SaveChangesAsync();
         }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("add-project", ex);
+            throw;
+        }
         finally
         {
             ReleaseWriteAccess();
@@ -295,6 +305,11 @@ public class PlannerRepository
         {
             _db.Projects.Update(project);
             await _db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("update-project", ex);
+            throw;
         }
         finally
         {
@@ -369,6 +384,11 @@ public class PlannerRepository
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("update-task", ex);
+            throw;
         }
         finally
         {
@@ -472,6 +492,11 @@ public class PlannerRepository
                 throw;
             }
         }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("update-tasks", ex);
+            throw;
+        }
         finally
         {
             _sqliteWriteCoordinator.Release();
@@ -530,6 +555,11 @@ public class PlannerRepository
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("forward-task", ex);
+            throw;
         }
         finally
         {
@@ -704,6 +734,11 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
                 throw;
             }
         }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("execute-catch-up", ex);
+            throw;
+        }
         finally
         {
             ReleaseWriteAccess();
@@ -731,6 +766,11 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("delete-task", ex);
+            throw;
         }
         finally
         {
@@ -775,6 +815,11 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
             _db.Notes.Add(note);
             await _db.SaveChangesAsync();
         }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("add-note", ex);
+            throw;
+        }
         finally
         {
             ReleaseWriteAccess();
@@ -794,6 +839,11 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
             _db.Notes.Update(note);
             await _db.SaveChangesAsync();
         }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("update-note", ex);
+            throw;
+        }
         finally
         {
             ReleaseWriteAccess();
@@ -812,6 +862,11 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
         {
             _db.Notes.Remove(note);
             await _db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("delete-note", ex);
+            throw;
         }
         finally
         {
@@ -913,9 +968,28 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
 
             await _db.SaveChangesAsync();
         }
+        catch (Exception ex)
+        {
+            ResetWriteStateAfterFailure("note-order-backfill", ex);
+            throw;
+        }
         finally
         {
             ReleaseWriteAccess();
+        }
+    }
+
+    void ResetWriteStateAfterFailure(string operation, Exception ex)
+    {
+        try
+        {
+            int trackedEntries = _db.ChangeTracker.Entries().Count();
+            _db.ChangeTracker.Clear();
+            Console.WriteLine($"Write recovery: cleared {trackedEntries} tracked entries after {operation} failure ({ex.GetType().Name}: {ex.Message}).");
+        }
+        catch (Exception clearEx)
+        {
+            Console.WriteLine($"Write recovery failed after {operation} failure: {clearEx.GetType().Name}: {clearEx.Message}");
         }
     }
 
