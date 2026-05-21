@@ -15,6 +15,7 @@ namespace Ben.Datasync.Server
         public DbSet<TaskItem> TaskItems => Set<TaskItem>();
         public DbSet<NoteItem> NoteItems => Set<NoteItem>();
         public DbSet<ProjectItem> ProjectItems => Set<ProjectItem>();
+        public DbSet<UserRecord> Users => Set<UserRecord>();
 
         // public DbSet<TodoList> TodoLists => Set<TodoList>();
 
@@ -214,6 +215,28 @@ END;
             modelBuilder.Entity<ProjectItem>()
                 .Property(project => project.UserId)
                 .HasMaxLength(256);
+
+            modelBuilder.Entity<UserRecord>()
+                .ToTable("Users")
+                .HasKey(user => user.UserId);
+
+            modelBuilder.Entity<UserRecord>()
+                .Property(user => user.ExternalId)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            modelBuilder.Entity<UserRecord>()
+                .Property(user => user.IdentityProvider)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            modelBuilder.Entity<UserRecord>()
+                .Property(user => user.Email)
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<UserRecord>()
+                .Property(user => user.CreatedAt)
+                .HasColumnType("datetime2(7)");
 
         }
     }

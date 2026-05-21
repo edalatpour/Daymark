@@ -1,7 +1,9 @@
 using System;
 using System.Linq.Expressions;
+using System.Security.Claims;
 using CommunityToolkit.Datasync.Server;
 using CommunityToolkit.Datasync.Server.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Ben.Datasync.Server
@@ -9,6 +11,7 @@ namespace Ben.Datasync.Server
   public class PersonalAccessControlProvider<TEntity>(IHttpContextAccessor contextAccessor, ILogger<PersonalAccessControlProvider<TEntity>> logger) : IAccessControlProvider<TEntity>
     where TEntity : ITableData, IPersonalEntity
   {
+    private const string UserRecordCheckedItemKey = "Ben.UserRecordChecked";
 
     // private string? UserId { get => contextAccessor.HttpContext?.User?.Identity?.Name; }
     private string? UserId
@@ -24,7 +27,7 @@ namespace Ben.Datasync.Server
       return UserId is null ? x => false : x => x.UserId == UserId;
     }
 
-    public ValueTask<bool> IsAuthorizedAsync(TableOperation op, TEntity? entity, CancellationToken cancellationToken = default)
+    public async ValueTask<bool> IsAuthorizedAsync(TableOperation op, TEntity? entity, CancellationToken cancellationToken = default)
     {
       string? userId = UserId;
       logger.LogInformation("IsAuthorizedAsync called. Operation: {Operation}, UserId: {UserId}, Entity.UserId: {EntityUserId}",
@@ -32,13 +35,14 @@ namespace Ben.Datasync.Server
 
       if (string.IsNullOrWhiteSpace(userId))
       {
-        return ValueTask.FromResult(false);
+        return false;
       }
 
-      return ValueTask.FromResult(op is TableOperation.Create || op is TableOperation.Query || (entity?.UserId == userId));
+      await EnsureUserRecordExistsAsync(cancellationToken);
+      return op is TableOperation.Create || op is TableOperation.Query || (entity?.UserId == userId);
     }
 
-    public ValueTask PreCommitHookAsync(TableOperation op, TEntity entity, CancellationToken cancellationToken = default)
+    public async ValueTask PreCommitHookAsync(TableOperation op, TEntity entity, CancellationToken cancellationToken = default)
     {
       var httpContext = contextAccessor.HttpContext;
 
@@ -89,18 +93,139 @@ namespace Ben.Datasync.Server
       string? userId = UserId;
       logger.LogInformation("UserId extracted from claims/identity: {UserId}", userId ?? "(null)");
 
+      await EnsureUserRecordExistsAsync(cancellationToken);
+
       if (string.IsNullOrWhiteSpace(userId))
       {
         logger.LogWarning("UserId is null in PreCommitHookAsync. Skipping user assignment and relying on IsAuthorizedAsync to reject the operation.");
-        return ValueTask.CompletedTask;
+        return;
       }
 
       entity.UserId = userId;
-      return ValueTask.CompletedTask;
     }
 
     public ValueTask PostCommitHookAsync(TableOperation op, TEntity entity, CancellationToken cancellationToken = default)
       => ValueTask.CompletedTask;
+
+    private async ValueTask EnsureUserRecordExistsAsync(CancellationToken cancellationToken)
+    {
+      HttpContext? httpContext = contextAccessor.HttpContext;
+      if (httpContext == null)
+      {
+        return;
+      }
+
+      if (httpContext.Items.ContainsKey(UserRecordCheckedItemKey))
+      {
+        return;
+      }
+
+      httpContext.Items[UserRecordCheckedItemKey] = true;
+
+      string? externalId = httpContext.User?.FindFirst("sub")?.Value;
+      string? identityProvider = ResolveIdentityProvider(httpContext.User);
+      string? email = UserId;
+
+      if (string.IsNullOrWhiteSpace(externalId) || string.IsNullOrWhiteSpace(identityProvider))
+      {
+        logger.LogWarning("Skipping Users upsert: missing ExternalId or IdentityProvider. ExternalId={ExternalId}, IdentityProvider={IdentityProvider}",
+          externalId ?? "(null)",
+          identityProvider ?? "(null)");
+        return;
+      }
+
+      string normalizedExternalId = externalId.Length > 200 ? externalId[..200] : externalId;
+      string normalizedIdentityProvider = identityProvider.Length > 50 ? identityProvider[..50] : identityProvider;
+      string? normalizedEmail = string.IsNullOrWhiteSpace(email)
+        ? null
+        : (email.Length > 200 ? email[..200] : email);
+
+      AppDbContext dbContext = httpContext.RequestServices.GetRequiredService<AppDbContext>();
+
+      UserRecord? existing = await dbContext.Users
+        .AsNoTracking()
+        .FirstOrDefaultAsync(
+          user => user.ExternalId == normalizedExternalId && user.IdentityProvider == normalizedIdentityProvider,
+          cancellationToken);
+
+      if (existing != null)
+      {
+        logger.LogInformation("Users record already exists for provider {IdentityProvider} and external id {ExternalId}",
+          normalizedIdentityProvider,
+          normalizedExternalId);
+        return;
+      }
+
+      var newUser = new UserRecord
+      {
+        UserId = Guid.NewGuid(),
+        ExternalId = normalizedExternalId,
+        IdentityProvider = normalizedIdentityProvider,
+        Email = normalizedEmail,
+        CreatedAt = DateTime.UtcNow
+      };
+
+      dbContext.Users.Add(newUser);
+      await dbContext.SaveChangesAsync(cancellationToken);
+
+      logger.LogInformation("Inserted Users record. UserId={UserId}, IdentityProvider={IdentityProvider}, ExternalId={ExternalId}, Email={Email}",
+        newUser.UserId,
+        newUser.IdentityProvider,
+        newUser.ExternalId,
+        newUser.Email ?? "(null)");
+    }
+
+    private static string? ResolveIdentityProvider(ClaimsPrincipal? user)
+    {
+      if (user == null)
+      {
+        return null;
+      }
+
+      string? idpClaim = user.FindFirst("idp")?.Value;
+      if (!string.IsNullOrWhiteSpace(idpClaim))
+      {
+        string fromIdp = idpClaim.ToLowerInvariant();
+        if (fromIdp.Contains("apple"))
+        {
+          return "apple";
+        }
+
+        if (fromIdp.Contains("google"))
+        {
+          return "google";
+        }
+
+        if (fromIdp.Contains("microsoft") || fromIdp.Contains("live.com") || fromIdp.Contains("entra"))
+        {
+          return "microsoft";
+        }
+      }
+
+      string? issuer = user.FindFirst("iss")?.Value;
+      if (string.IsNullOrWhiteSpace(issuer))
+      {
+        return null;
+      }
+
+      string normalizedIssuer = issuer.ToLowerInvariant();
+      if (normalizedIssuer.Contains("appleid.apple.com"))
+      {
+        return "apple";
+      }
+
+      if (normalizedIssuer.Contains("accounts.google.com"))
+      {
+        return "google";
+      }
+
+      if (normalizedIssuer.Contains("microsoftonline.com") || normalizedIssuer.Contains("ciamlogin.com"))
+      {
+        return "microsoft";
+      }
+
+      return null;
+    }
   }
 
 }
