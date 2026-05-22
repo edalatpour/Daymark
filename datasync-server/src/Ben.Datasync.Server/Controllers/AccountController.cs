@@ -36,7 +36,6 @@ namespace Ben.Datasync.Server
 
             string? externalId = httpContext.User.FindFirst("sub")?.Value;
             string? identityProvider = ResolveIdentityProvider(httpContext.User);
-            string? email = ResolveEmail(httpContext.User);
 
             if (string.IsNullOrWhiteSpace(externalId) || string.IsNullOrWhiteSpace(identityProvider))
             {
@@ -51,33 +50,66 @@ namespace Ben.Datasync.Server
             string normalizedIdentityProvider = identityProvider.Length > 50 ? identityProvider[..50] : identityProvider;
 
             UserRecord? userRecord = await _dbContext.Users
-                .AsNoTracking()
                 .FirstOrDefaultAsync(
                     user => user.ExternalId == normalizedExternalId && user.IdentityProvider == normalizedIdentityProvider,
                     cancellationToken);
 
-            _logger.LogInformation(
-                "Delete-cloud-data request accepted in scaffold mode. Provider={IdentityProvider}, HasUserRecord={HasUserRecord}, CanonicalUserId={CanonicalUserId}",
-                normalizedIdentityProvider,
-                userRecord != null,
-                userRecord?.UserId.ToString() ?? "(null)");
+            string? canonicalUserId = userRecord?.UserId.ToString();
 
-            return StatusCode(StatusCodes.Status501NotImplemented, new
+            if (string.IsNullOrWhiteSpace(canonicalUserId))
             {
-                status = "not_implemented",
-                message = "Delete cloud data endpoint scaffold is active, but deletion is not enabled yet.",
-                hasUserRecord = userRecord != null,
-                canonicalUserId = userRecord?.UserId.ToString(),
-                identityProvider = normalizedIdentityProvider,
-                email = userRecord?.Email ?? email,
-            });
-        }
+                return BadRequest(new
+                {
+                    status = "invalid_identity",
+                    message = "Cannot resolve a canonical user record for cloud data deletion."
+                });
+            }
 
-        private static string? ResolveEmail(ClaimsPrincipal user)
-        {
-            return user.FindFirst("email")?.Value
-                ?? user.FindFirst("preferred_username")?.Value
-                ?? user.Identity?.Name;
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+            int tasksDeleted = await _dbContext.TaskItems
+                .Where(item => item.UserId == canonicalUserId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            int notesDeleted = await _dbContext.NoteItems
+                .Where(item => item.UserId == canonicalUserId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            int projectsDeleted = await _dbContext.ProjectItems
+                .Where(item => item.UserId == canonicalUserId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            int usersDeleted = await _dbContext.Users
+                .Where(user => user.UserId == userRecord!.UserId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "Delete-cloud-data succeeded. Provider={IdentityProvider}, CanonicalUserId={CanonicalUserId}, TasksDeleted={TasksDeleted}, NotesDeleted={NotesDeleted}, ProjectsDeleted={ProjectsDeleted}, UsersDeleted={UsersDeleted}",
+                normalizedIdentityProvider,
+                canonicalUserId ?? "(null)",
+                tasksDeleted,
+                notesDeleted,
+                projectsDeleted,
+                usersDeleted);
+
+            return Ok(new
+            {
+                status = "deleted",
+                message = "Cloud data deleted for the authenticated account.",
+                hasUserRecord = userRecord != null,
+                canonicalUserId,
+                identityProvider = normalizedIdentityProvider,
+                email = userRecord?.Email,
+                deletedCounts = new
+                {
+                    tasks = tasksDeleted,
+                    notes = notesDeleted,
+                    projects = projectsDeleted,
+                    users = usersDeleted
+                }
+            });
         }
 
         private static string? ResolveIdentityProvider(ClaimsPrincipal user)
