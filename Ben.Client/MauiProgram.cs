@@ -58,6 +58,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<UserFontService>();
         builder.Services.AddSingleton<SqliteWriteCoordinator>();
         builder.Services.AddSingleton<ILocalDatabaseLifecycleService, LocalDatabaseLifecycleService>();
+        builder.Services.AddSingleton<ICloudAccountService, CloudAccountService>();
         builder.Services.AddSingleton<DatasyncSyncService>();
 
         builder.Services.AddDbContext<LocalSchemaDbContext>(options => options.UseSqlite(sqliteConnectionString));
