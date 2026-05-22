@@ -98,7 +98,7 @@ public partial class SettingsPage : ContentPage
     {
         LocalDataNoticeLabel.IsVisible = false;
 
-        bool confirmed = await DisplayAlert(
+        bool confirmed = await DisplayAlertAsync(
             "Delete local data?",
             "This will delete and recreate the local Daymark database on this device. It will not delete your cloud data.",
             "Delete local data",
@@ -114,7 +114,58 @@ public partial class SettingsPage : ContentPage
 
     private void OnDeleteCloudDataTapped(object sender, EventArgs e)
     {
-        // Intentionally left blank for now. UI is in place; behavior will be wired later.
+        _ = DeleteCloudDataAsync();
+    }
+
+    private async Task DeleteCloudDataAsync()
+    {
+        LocalDataNoticeLabel.IsVisible = false;
+
+        if (!_dailyViewModel.IsAuthenticated)
+        {
+            await DisplayAlertAsync("Sign in required", "You must be signed in to delete cloud data.", "OK");
+            return;
+        }
+
+        var identity = await _dailyViewModel.ReauthenticateAsync();
+        if (identity == null)
+        {
+            await DisplayAlertAsync(
+                "Re-authentication canceled",
+                "Cloud data was not deleted.",
+                "OK");
+            return;
+        }
+
+        bool confirmed = await DisplayAlertAsync(
+            "Delete cloud data?",
+            "Your cloud data will be deleted. You will be signed out. Local data will remain on this device unless you choose Delete local data.",
+            "Delete cloud data",
+            "Cancel");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await _dailyViewModel.DeleteCloudDataAndSignOutAsync();
+
+        LocalDataNoticeLabel.Text = "Signed out. Local data remains on this device unless you choose Delete local data.";
+        LocalDataNoticeLabel.IsVisible = true;
+
+        if (result.IsSuccess)
+        {
+            await DisplayAlertAsync(
+                "Cloud data deleted",
+                "Your cloud data was deleted and you were signed out. Local data remains on this device.",
+                "OK");
+            return;
+        }
+
+        await DisplayAlertAsync(
+            "Signed out",
+            "You were signed out, but cloud data deletion did not complete. Local data remains on this device.",
+            "OK");
     }
 
     private async void OnSignInMicrosoftTapped(object sender, TappedEventArgs e)

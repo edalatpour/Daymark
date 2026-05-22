@@ -31,6 +31,7 @@ public class DailyViewModel : INotifyPropertyChanged
 
     private readonly PlannerRepository _repo;
     private readonly IUnifiedAuthService _unifiedAuthService;
+    private readonly ICloudAccountService _cloudAccountService;
     private readonly IAuthenticationLifecycleCoordinator _authLifecycleCoordinator;
     private readonly MsalService _authService;
     private readonly DatasyncSyncService _syncService;
@@ -45,6 +46,7 @@ public class DailyViewModel : INotifyPropertyChanged
     public DailyViewModel(
         PlannerRepository repo,
         IUnifiedAuthService unifiedAuthService,
+        ICloudAccountService cloudAccountService,
         IAuthenticationLifecycleCoordinator authLifecycleCoordinator,
         MsalService authService,
         DatasyncSyncService syncService,
@@ -52,6 +54,7 @@ public class DailyViewModel : INotifyPropertyChanged
     {
         _repo = repo;
         _unifiedAuthService = unifiedAuthService;
+        _cloudAccountService = cloudAccountService;
         _authLifecycleCoordinator = authLifecycleCoordinator;
         _authService = authService;
         _syncService = syncService;
@@ -1545,6 +1548,21 @@ public class DailyViewModel : INotifyPropertyChanged
         await LoadPageAsync(currentKey);
 
         await UpdateStatus();
+    }
+
+    public Task<UnifiedIdentity?> ReauthenticateAsync(CancellationToken cancellationToken = default)
+    {
+        return _unifiedAuthService.ReauthenticateAsync(cancellationToken);
+    }
+
+    public async Task<DeleteCloudDataResult> DeleteCloudDataAndSignOutAsync(CancellationToken cancellationToken = default)
+    {
+        DeleteCloudDataResult deleteResult = await _cloudAccountService.DeleteCloudDataAsync(cancellationToken);
+
+        // Account deletion flow must always end in a signed-out state.
+        await SignOutAsync();
+
+        return deleteResult;
     }
 
     public async Task SignInWithMicrosoftAsync()
