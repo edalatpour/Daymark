@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls"
-             ios:Page.SafeAreaEdges="None"
              xmlns:viewModels="clr-namespace:Ben.ViewModels"
              x:Class="Ben.Views.DailyHostPage"
              x:DataType="viewModels:DailyViewModel"
              x:Name="HostPage"
+             SafeAreaEdges="None"
              BackgroundColor="Transparent">
 
   <Grid x:Name="RootGrid"
+        SafeAreaEdges="None"
         BackgroundColor="{DynamicResource Paper}"
         RowDefinitions="*,Auto">
+
+    <Grid.GestureRecognizers>
+      <SwipeGestureRecognizer Direction="Left"
+                              Swiped="OnSwipeLeft"/>
+      <SwipeGestureRecognizer Direction="Right"
+                              Swiped="OnSwipeRight"/>
+    </Grid.GestureRecognizers>
 
     <Image
       Grid.RowSpan="2"
@@ -19,14 +26,6 @@
       VerticalOptions="Fill"
       Source="{DynamicResource RootGridBackground}"
       Style="{DynamicResource RootGridBackgroundImage}"/>
-
-    <!-- SafeAreaEdges="None" -->
-    <Grid.GestureRecognizers>
-      <SwipeGestureRecognizer Direction="Left"
-                              Swiped="OnSwipeLeft"/>
-      <SwipeGestureRecognizer Direction="Right"
-                              Swiped="OnSwipeRight"/>
-    </Grid.GestureRecognizers>
 
     <!-- Landscape: show both pages -->
     <Grid x:Name="LandscapeGrid"
@@ -156,8 +155,8 @@
           Grid.Row="1"
           ColumnDefinitions="*,*"
           BackgroundColor="Transparent"
-          Padding="16,-16,16,0"
-          HeightRequest="32">
+          Padding="{OnPlatform iOS='16,8,16,10', Default='16,2,16,4'}"
+          HeightRequest="{OnPlatform iOS=52, Default=40}">
 
       <Label x:Name="SettingsLabel"
              Grid.Column="0"
