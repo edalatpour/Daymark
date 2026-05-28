@@ -1,5 +1,6 @@
 using Ben.Services;
 using Ben.ViewModels;
+using Microsoft.Maui.Storage;
 
 namespace Ben.Views;
 
@@ -29,8 +30,13 @@ public partial class SettingsPage : ContentPage
 
     private string _originalTheme = "Blue";
     private string _selectedTheme = "Blue";
+    private bool _originalUseCustomBackgroundImage;
+    private bool _selectedUseCustomBackgroundImage;
+    private string? _originalCustomBackgroundImagePath;
+    private string? _selectedCustomBackgroundImagePath;
     private string _selectedUserFont = "PatrickHand";
     private readonly ThemeService _themeService;
+    private readonly BackgroundImageService _backgroundImageService;
     private readonly UserFontService _userFontService;
     private readonly DailyViewModel _dailyViewModel;
     private bool _isDeleteCloudDataInProgress;
@@ -71,6 +77,7 @@ public partial class SettingsPage : ContentPage
     {
         InitializeComponent();
         _themeService = IPlatformApplication.Current!.Services.GetService<ThemeService>()!;
+        _backgroundImageService = IPlatformApplication.Current!.Services.GetRequiredService<BackgroundImageService>();
         _userFontService = IPlatformApplication.Current!.Services.GetRequiredService<UserFontService>();
         _dailyViewModel = IPlatformApplication.Current!.Services.GetRequiredService<DailyViewModel>();
         BindingContext = this;
@@ -82,6 +89,13 @@ public partial class SettingsPage : ContentPage
         // Set the picker to the current theme
         var currentIndex = _availableThemes.FindIndex(t => t.Name == _originalTheme);
         ThemeColorPicker.SelectedIndex = currentIndex >= 0 ? currentIndex : 3; // Default to Hatteras
+
+        _originalUseCustomBackgroundImage = _backgroundImageService.UseCustomBackgroundImage;
+        _selectedUseCustomBackgroundImage = _originalUseCustomBackgroundImage;
+        _originalCustomBackgroundImagePath = _backgroundImageService.CustomBackgroundImagePath;
+        _selectedCustomBackgroundImagePath = _originalCustomBackgroundImagePath;
+        UseCustomBackgroundImageCheckBox.IsChecked = _selectedUseCustomBackgroundImage;
+        UpdateCustomBackgroundImageControls();
 
         // Set the font picker to the current selected user font.
         _selectedUserFont = _userFontService.CurrentUserFont;
@@ -237,11 +251,25 @@ public partial class SettingsPage : ContentPage
         Navigation.PopAsync();
     }
 
-    private void OnSaveClicked(object sender, EventArgs e)
+    private async void OnSaveClicked(object sender, EventArgs e)
     {
+        string? persistedCustomBackgroundImagePath = null;
+
+        if (_selectedUseCustomBackgroundImage)
+        {
+            if (string.IsNullOrWhiteSpace(_selectedCustomBackgroundImagePath) || !File.Exists(_selectedCustomBackgroundImagePath))
+            {
+                await DisplayAlertAsync("Select an image", "Choose an image file to use as your custom background.", "OK");
+                return;
+            }
+
+            persistedCustomBackgroundImagePath = await BackgroundImageService.PersistCustomBackgroundImageAsync(_selectedCustomBackgroundImagePath);
+        }
+
         _themeService.SetTheme(_selectedTheme);
+        _backgroundImageService.SetBackgroundImageOverride(_selectedUseCustomBackgroundImage, persistedCustomBackgroundImagePath);
         _userFontService.ApplyUserFont(_selectedUserFont);
-        Navigation.PopAsync();
+        await Navigation.PopAsync();
     }
 
     private void OnUserFontSelected(object sender, EventArgs e)
@@ -257,6 +285,49 @@ public partial class SettingsPage : ContentPage
     {
         ThemeColorPicker.FontFamily = _selectedUserFont;
         UserFontPicker.FontFamily = _selectedUserFont;
+    }
+
+    private void OnUseCustomBackgroundImageCheckedChanged(object sender, CheckedChangedEventArgs e)
+    {
+        _selectedUseCustomBackgroundImage = e.Value;
+
+        UpdateCustomBackgroundImageControls();
+    }
+
+    private async void OnChooseBackgroundImageClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            var result = await FilePicker.Default.PickAsync(new PickOptions
+            {
+                PickerTitle = "Choose background image",
+                FileTypes = FilePickerFileType.Images,
+            });
+
+            if (result == null)
+            {
+                return;
+            }
+
+            _selectedCustomBackgroundImagePath = result.FullPath;
+            UpdateCustomBackgroundImageControls();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Unable to choose file", ex.Message, "OK");
+        }
+    }
+
+    private void UpdateCustomBackgroundImageControls()
+    {
+        ChooseBackgroundImageButton.IsVisible = _selectedUseCustomBackgroundImage;
+
+        var selectedFileName = Path.GetFileName(_selectedCustomBackgroundImagePath);
+        CustomBackgroundImageFileNameLabel.Text = !_selectedUseCustomBackgroundImage
+            ? "Theme background image will be used."
+            : string.IsNullOrWhiteSpace(selectedFileName)
+                ? "No file selected"
+                : selectedFileName;
     }
 
     private void ApplyThemePreview(string themeName)

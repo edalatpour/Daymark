@@ -58,6 +58,9 @@ public partial class App : Application
             System.Diagnostics.Debug.WriteLine("Theme service initialized");
         }
 
+        var backgroundImageService = IPlatformApplication.Current?.Services.GetService<BackgroundImageService>();
+        backgroundImageService?.InitializeBackgroundImage();
+
         var userFontService = IPlatformApplication.Current?.Services.GetService<UserFontService>();
         userFontService?.InitializeUserFont();
 

@@ -36,48 +36,13 @@
 
                     <Grid BackgroundColor="{DynamicResource WritingPaper}"
                           Padding="{DynamicResource SpacingLg}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                           RowSpacing="{DynamicResource SpacingLg}">
 
                         <!-- Authentication -->
                         <StackLayout Grid.Row="0"
                                      Spacing="{DynamicResource SpacingSm}"
                                      Padding="{DynamicResource SectionHeaderPadding}">
-
-                            <!-- Authenticated state: user avatar + email/name (tap = sign out) -->
-                            <Grid IsVisible="{Binding AuthViewModel.IsAuthenticated}"
-                                  ColumnDefinitions="Auto,*"
-                                  RowDefinitions="Auto,Auto"
-                                  ColumnSpacing="{DynamicResource SpacingSm}"
-                                  RowSpacing="{DynamicResource SpacingXs}"
-                                  HorizontalOptions="Fill">
-
-                                <Grid Grid.Column="0"
-                                      WidthRequest="24"
-                                      HeightRequest="24"
-                                      VerticalOptions="Center"
-                                      HorizontalOptions="Center">
-                                    <Border IsVisible="{Binding AuthViewModel.IsUserAvatarPhoto}"
-                                            WidthRequest="24"
-                                            HeightRequest="24"
-                                            StrokeThickness="0">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="12"/>
-                                        </Border.StrokeShape>
-                                        <Image Source="{Binding AuthViewModel.UserAvatarSource}"
-                                               Aspect="AspectFill"
-                                               WidthRequest="24"
-                                               HeightRequest="24"/>
-                                    </Border>
-
-                                    <Image IsVisible="{Binding AuthViewModel.IsUserAvatarFallback}"
-                                           Source="{Binding AuthViewModel.UserAvatarSource}"
-                                           Aspect="AspectFit"
-                                           WidthRequest="24"
-                                           HeightRequest="24"/>
-                                </Grid>
-
-                            </Grid>
 
                             <!-- Not-authenticated state: available sign-in options -->
                             <!-- Image files required in Resources/Images:
@@ -139,8 +104,39 @@
                                     FontSize="18"/>
                         </Grid>
 
+                               <Grid Grid.Row="2"
+                                  ColumnDefinitions="Auto,*,Auto"
+                                  ColumnSpacing="{DynamicResource SpacingSm}"
+                                  Padding="{DynamicResource SectionHeaderPadding}">
+                                <CheckBox x:Name="UseCustomBackgroundImageCheckBox"
+                                       Grid.Column="0"
+                                       VerticalOptions="Center"
+                                       CheckedChanged="OnUseCustomBackgroundImageCheckedChanged"/>
+
+                                <Label Grid.Column="1"
+                                    Text="Use custom background image"
+                                    Style="{DynamicResource LabelSection}"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="Start"/>
+
+                                <Button x:Name="ChooseBackgroundImageButton"
+                                     Grid.Column="2"
+                                     Text="Choose file"
+                                     Style="{DynamicResource GhostActionButton}"
+                                     VerticalOptions="Center"
+                                     Clicked="OnChooseBackgroundImageClicked"/>
+                               </Grid>
+
+                               <Label x:Name="CustomBackgroundImageFileNameLabel"
+                                   Grid.Row="3"
+                                   Text="No file selected"
+                                   FontSize="12"
+                                   TextColor="{DynamicResource Link}"
+                                   Padding="{DynamicResource SectionHeaderPadding}"
+                                   LineBreakMode="TailTruncation"/>
+
                         <!-- User Font Selection -->
-                        <Grid Grid.Row="2"
+                               <Grid Grid.Row="4"
                               ColumnDefinitions="Auto,*"
                               ColumnSpacing="{DynamicResource SpacingSm}"
                               Padding="{DynamicResource SectionHeaderPadding}">
@@ -164,18 +160,46 @@
                         </Grid>
 
                         <!-- Data & Privacy -->
-                        <VerticalStackLayout Grid.Row="3"
+                        <VerticalStackLayout Grid.Row="5"
                                              Spacing="{DynamicResource SpacingSm}"
                                              Padding="{DynamicResource SectionHeaderPadding}">
                             <Label Text="Data &amp; Privacy"
                                    Style="{DynamicResource LabelSection}"
                                    HorizontalOptions="Start"/>
 
-                            <Label Text="{Binding AuthViewModel.LoginStatusText}"
-                                   FontSize="14"
-                                   TextColor="{DynamicResource Link}"
-                                   IsVisible="{Binding AuthViewModel.IsAuthenticated}"
-                                   LineBreakMode="WordWrap"/>
+                            <HorizontalStackLayout IsVisible="{Binding AuthViewModel.IsAuthenticated}"
+                                          Spacing="{DynamicResource SpacingSm}"
+                                          VerticalOptions="Center">
+                                <Grid WidthRequest="24"
+                                   HeightRequest="24"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center">
+                                 <Border IsVisible="{Binding AuthViewModel.IsUserAvatarPhoto}"
+                                      WidthRequest="24"
+                                      HeightRequest="24"
+                                      StrokeThickness="0">
+                                     <Border.StrokeShape>
+                                      <RoundRectangle CornerRadius="12"/>
+                                     </Border.StrokeShape>
+                                     <Image Source="{Binding AuthViewModel.UserAvatarSource}"
+                                         Aspect="AspectFill"
+                                         WidthRequest="24"
+                                         HeightRequest="24"/>
+                                 </Border>
+
+                                 <Image IsVisible="{Binding AuthViewModel.IsUserAvatarFallback}"
+                                     Source="{Binding AuthViewModel.UserAvatarSource}"
+                                     Aspect="AspectFit"
+                                     WidthRequest="24"
+                                     HeightRequest="24"/>
+                                </Grid>
+
+                                <Label Text="{Binding AuthViewModel.LoginStatusText}"
+                                    FontSize="14"
+                                    TextColor="{DynamicResource Link}"
+                                    VerticalOptions="Center"
+                                    LineBreakMode="WordWrap"/>
+                            </HorizontalStackLayout>
 
                             <Button x:Name="SignOutButton"
                                     Text="Sign out"
@@ -216,7 +240,7 @@
                             </HorizontalStackLayout>
                         </VerticalStackLayout>
 
-                        <Label Grid.Row="4"
+                           <Label Grid.Row="6"
                                Text="About Daymark"
                                FontSize="14"
                                TextColor="{DynamicResource Link}"

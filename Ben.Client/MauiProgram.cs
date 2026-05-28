@@ -55,6 +55,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAuthenticationLifecycleCoordinator, AuthenticationLifecycleCoordinator>();
         builder.Services.AddSingleton<IThemeIdentityService, NoOpThemeIdentityService>();
         builder.Services.AddSingleton<ThemeService>();
+        builder.Services.AddSingleton<BackgroundImageService>();
         builder.Services.AddSingleton<UserFontService>();
         builder.Services.AddSingleton<SqliteWriteCoordinator>();
         builder.Services.AddSingleton<ILocalDatabaseLifecycleService, LocalDatabaseLifecycleService>();

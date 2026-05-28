@@ -5,6 +5,8 @@ namespace Ben.Services;
 
 public class ThemeService
 {
+    private const string SelectedThemePreferenceKey = "SelectedTheme";
+
     private static readonly HashSet<string> ThemeNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "Red",
@@ -45,7 +47,7 @@ public class ThemeService
     public ThemeService(IThemeIdentityService themeIdentityService)
     {
         _themeIdentityService = themeIdentityService;
-        _currentTheme = Preferences.Get("SelectedTheme", "Hatteras");
+        _currentTheme = Preferences.Get(SelectedThemePreferenceKey, "Hatteras");
         System.Diagnostics.Debug.WriteLine($"ThemeService initialized with theme: {_currentTheme}");
     }
 
@@ -98,7 +100,7 @@ public class ThemeService
 
             if (!skipPrefsSave)
             {
-                Preferences.Set("SelectedTheme", normalizedThemeName);
+                Preferences.Set(SelectedThemePreferenceKey, normalizedThemeName);
             }
 
             System.Diagnostics.Debug.WriteLine($"Theme dict has {newThemeDict.Count} resources");
