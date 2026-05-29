@@ -58,8 +58,7 @@
                                        Aspect="AspectFit"
                                        WidthRequest="200"
                                        VerticalOptions="Center"
-                                       HorizontalOptions="Center"
-                                       IsVisible="{OnPlatform Default=true, WinUI=false}">
+                                       HorizontalOptions="Center">
                                     <Image.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnSignInAppleTapped"/>
                                     </Image.GestureRecognizers>

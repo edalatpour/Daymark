@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Ben.Models;
 
@@ -5,7 +6,8 @@ namespace Ben.Services;
 
 /// <summary>
 /// Handles Apple sign-in using Microsoft Entra External ID (CIAM)
-/// via the platform's WebAuthenticator (ASWebAuthenticationSession on iOS).
+/// via the platform's WebAuthenticator (ASWebAuthenticationSession on iOS/macOS)
+/// or a localhost HTTP listener with system browser on Windows.
 ///
 /// CLIENT-SIDE ONLY — no backend calls are made. Token exchange happens entirely
 /// inside the External ID authorization endpoint using the implicit / hybrid flow.
@@ -39,10 +41,28 @@ public class ExternalIdAuthService
 
     /// <summary>
     /// Custom URL scheme redirect URI registered for this app in the External ID tenant.
-    /// Must also be registered as a CFBundleURLScheme in Info.plist (iOS) and as an
-    /// intent-filter scheme in AndroidManifest.xml (Android).
+    /// Used on iOS/macOS with WebAuthenticator.
     /// </summary>
     private const string RedirectUri = "myapp://auth";
+
+    /// <summary>
+    /// Localhost redirect URI path used on Windows. The full URI includes a fixed port:
+    /// http://localhost:{WindowsCallbackPort}/callback
+    /// This exact URI must be registered as a "Web" or "SPA" redirect URI in the External ID tenant.
+    /// Register: http://localhost:39841/callback
+    /// </summary>
+    private const string WindowsCallbackPath = "/callback";
+
+    /// <summary>
+    /// Fixed port for the Windows localhost callback listener.
+    /// Using a fixed port allows the exact redirect URI to be registered in Entra External ID.
+    /// </summary>
+    private const int WindowsCallbackPort = 39841;
+
+    /// <summary>
+    /// Timeout for the Windows browser-based authentication flow.
+    /// </summary>
+    private static readonly TimeSpan WindowsAuthTimeout = TimeSpan.FromMinutes(5);
 
     // -----------------------------------------------------------------------
     // Preferences keys (namespaced to avoid collisions with MSAL keys)
@@ -143,34 +163,40 @@ public class ExternalIdAuthService
     {
         const string provider = "apple";
 
-        if (!OperatingSystem.IsIOS())
+        if (OperatingSystem.IsIOS() || OperatingSystem.IsMacCatalyst())
         {
-            Console.WriteLine("[ExternalId] Apple sign-in is currently enabled only on iOS builds.");
-            return null;
+            return await AuthenticateWithWebAuthenticatorAsync(provider, forcePrompt);
         }
 
+        if (OperatingSystem.IsWindows())
+        {
+            return await AuthenticateWithLocalhostListenerAsync(provider, forcePrompt);
+        }
+
+        Console.WriteLine("[ExternalId] Apple sign-in is not supported on this platform.");
+        return null;
+    }
+
+    /// <summary>
+    /// iOS/macOS flow using MAUI WebAuthenticator (ASWebAuthenticationSession).
+    /// </summary>
+    private async Task<UnifiedIdentity?> AuthenticateWithWebAuthenticatorAsync(string provider, bool forcePrompt)
+    {
         try
         {
-            // Build the full authorize URL for Apple sign-in
-            var authorizeUrl = BuildAuthorizeUrl(forcePrompt);
-
-            // callbackUri must match the redirect_uri registered in the External ID tenant
+            var authorizeUrl = BuildAuthorizeUrl(RedirectUri, forcePrompt, out _);
             var callbackUri = new Uri(RedirectUri);
 
             Console.WriteLine($"[ExternalId] Launching WebAuthenticator for provider: {provider}");
-            Console.WriteLine($"[ExternalId] Authorize URL: {authorizeUrl}");
 
-            // Launch ASWebAuthenticationSession on iOS
             var result = await WebAuthenticator.Default.AuthenticateAsync(
                 new Uri(authorizeUrl), callbackUri);
 
-            // Parse the returned tokens and build the normalized identity
-            return ParseAndStoreResult(result, provider);
+            return ParseAndStoreResult(result.Properties, provider);
         }
         catch (OperationCanceledException)
         {
-            // This can be a normal user cancel, but can also indicate callback mismatch/config issues.
-            Console.WriteLine($"[ExternalId] Sign-in canceled (provider: {provider}). This can be user cancel or callback mismatch. RedirectUri={RedirectUri}");
+            Console.WriteLine($"[ExternalId] Sign-in canceled (provider: {provider}).");
             return null;
         }
         catch (PlatformNotSupportedException)
@@ -178,11 +204,252 @@ public class ExternalIdAuthService
             Console.WriteLine("[ExternalId] Platform does not support WebAuthenticator.");
             return null;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            Console.WriteLine($"[ExternalId] Authentication error (provider: {provider}).");
+            Console.WriteLine($"[ExternalId] Authentication error (provider: {provider}): {ex.Message}");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Windows flow using a localhost HTTP listener and the system browser.
+    /// Since the implicit flow returns tokens in the URL fragment (not sent to the server),
+    /// the listener serves a small HTML page with JavaScript that extracts the fragment
+    /// and POSTs it back to the listener.
+    /// </summary>
+    private async Task<UnifiedIdentity?> AuthenticateWithLocalhostListenerAsync(string provider, bool forcePrompt)
+    {
+        HttpListener? listener = null;
+
+        try
+        {
+            // Start the listener on the fixed port
+            listener = StartLocalhostListener(WindowsCallbackPort);
+
+            var redirectUri = $"http://localhost:{WindowsCallbackPort}{WindowsCallbackPath}";
+            var authorizeUrl = BuildAuthorizeUrl(redirectUri, forcePrompt, out var expectedState);
+
+            Console.WriteLine($"[ExternalId] Opening system browser for provider: {provider}");
+            Console.WriteLine($"[ExternalId] Listening on: {redirectUri}");
+
+            // Open the system browser
+            await Browser.OpenAsync(authorizeUrl, BrowserLaunchMode.SystemPreferred);
+
+            // Wait for the callback with a timeout
+            using var cts = new CancellationTokenSource(WindowsAuthTimeout);
+            var tokenParams = await WaitForCallbackAsync(listener, expectedState, cts.Token);
+
+            if (tokenParams == null)
+            {
+                Console.WriteLine("[ExternalId] No tokens received from callback.");
+                return null;
+            }
+
+            return ParseAndStoreResult(tokenParams, provider);
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"[ExternalId] Sign-in timed out or was canceled (provider: {provider}).");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ExternalId] Authentication error (provider: {provider}): {ex.Message}");
+            return null;
+        }
+        finally
+        {
+            try { listener?.Stop(); } catch { /* best effort cleanup */ }
+            try { listener?.Close(); } catch { /* best effort cleanup */ }
+        }
+    }
+
+    /// <summary>
+    /// Starts an HttpListener on the specified localhost port.
+    /// </summary>
+    private static HttpListener StartLocalhostListener(int port)
+    {
+        var listener = new HttpListener();
+        var prefix = $"http://localhost:{port}{WindowsCallbackPath}/";
+        listener.Prefixes.Add(prefix);
+        listener.Start();
+        return listener;
+    }
+
+    /// <summary>
+    /// Waits for the browser callback. Handles both the initial GET (serves the JS fragment extractor)
+    /// and the subsequent POST (receives the extracted tokens).
+    /// </summary>
+    private static async Task<Dictionary<string, string>?> WaitForCallbackAsync(
+        HttpListener listener, string expectedState, CancellationToken cancellationToken)
+    {
+        // Phase 1: Initial GET from the browser redirect — serve HTML/JS to extract the fragment
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var getContextTask = listener.GetContextAsync();
+            using var registration = cancellationToken.Register(() => listener.Stop());
+            HttpListenerContext context;
+
+            try
+            {
+                context = await getContextTask;
+            }
+            catch (HttpListenerException)
+            {
+                // Listener was stopped (timeout/cancellation)
+                return null;
+            }
+            catch (ObjectDisposedException)
+            {
+                return null;
+            }
+
+            var request = context.Request;
+
+            if (request.HttpMethod == "GET")
+            {
+                // Check for error in query string (some providers redirect errors as query params)
+                var queryError = request.QueryString["error"];
+                if (!string.IsNullOrEmpty(queryError))
+                {
+                    var errorDesc = request.QueryString["error_description"] ?? "Unknown error";
+                    Console.WriteLine($"[ExternalId] Auth error from provider: {queryError} - {errorDesc}");
+                    await ServeHtmlResponseAsync(context.Response, GetErrorHtml(queryError, errorDesc));
+                    return null;
+                }
+
+                // Serve the fragment extraction page
+                await ServeHtmlResponseAsync(context.Response, GetFragmentExtractorHtml());
+            }
+            else if (request.HttpMethod == "POST")
+            {
+                // Phase 2: Receive the fragment data posted by the JS
+                using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
+                var body = await reader.ReadToEndAsync(cancellationToken);
+                var parameters = ParseFormUrlEncoded(body);
+
+                // Validate state to prevent CSRF
+                if (parameters.TryGetValue("state", out var returnedState) &&
+                    returnedState != expectedState)
+                {
+                    Console.WriteLine("[ExternalId] State mismatch — possible CSRF. Rejecting callback.");
+                    await ServeHtmlResponseAsync(context.Response, GetErrorHtml("state_mismatch",
+                        "Authentication state validation failed. Please try again."));
+                    return null;
+                }
+
+                // Check for error in the fragment
+                if (parameters.TryGetValue("error", out var fragError))
+                {
+                    parameters.TryGetValue("error_description", out var fragErrorDesc);
+                    Console.WriteLine($"[ExternalId] Auth error in fragment: {fragError} - {fragErrorDesc}");
+                    await ServeHtmlResponseAsync(context.Response, GetErrorHtml(fragError, fragErrorDesc ?? "Unknown error"));
+                    return null;
+                }
+
+                // Serve success page and return the tokens
+                await ServeHtmlResponseAsync(context.Response, GetSuccessHtml());
+                return parameters;
+            }
+            else
+            {
+                context.Response.StatusCode = 405;
+                context.Response.Close();
+            }
+        }
+
+        return null;
+    }
+
+    private static async Task ServeHtmlResponseAsync(HttpListenerResponse response, string html)
+    {
+        response.ContentType = "text/html; charset=utf-8";
+        response.StatusCode = 200;
+        var buffer = System.Text.Encoding.UTF8.GetBytes(html);
+        response.ContentLength64 = buffer.Length;
+        await response.OutputStream.WriteAsync(buffer);
+        response.Close();
+    }
+
+    /// <summary>
+    /// HTML page served on the initial GET. JavaScript reads the URL fragment and POSTs
+    /// the token parameters back to the same endpoint so the app can capture them.
+    /// </summary>
+    private static string GetFragmentExtractorHtml() => """
+        <!DOCTYPE html>
+        <html>
+        <head><title>Signing in...</title></head>
+        <body>
+            <p>Completing sign-in, please wait...</p>
+            <script>
+                (function() {
+                    var hash = window.location.hash.substring(1);
+                    if (!hash) {
+                        document.body.innerHTML = '<p>Authentication failed: no response received.</p>';
+                        return;
+                    }
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', window.location.pathname, true);
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.onload = function() {
+                        document.body.innerHTML = '<p>Sign-in complete! You can close this tab.</p>';
+                    };
+                    xhr.onerror = function() {
+                        document.body.innerHTML = '<p>Failed to complete sign-in. Please try again.</p>';
+                    };
+                    xhr.send(hash);
+                })();
+            </script>
+        </body>
+        </html>
+        """;
+
+    private static string GetSuccessHtml() => """
+        <!DOCTYPE html>
+        <html>
+        <head><title>Sign-in Complete</title></head>
+        <body>
+            <p>Sign-in successful! You can close this tab and return to the app.</p>
+        </body>
+        </html>
+        """;
+
+    private static string GetErrorHtml(string error, string description) => $"""
+        <!DOCTYPE html>
+        <html>
+        <head><title>Sign-in Failed</title></head>
+        <body>
+            <p>Sign-in failed: {System.Web.HttpUtility.HtmlEncode(description)}</p>
+            <p>Error code: {System.Web.HttpUtility.HtmlEncode(error)}</p>
+            <p>You can close this tab and try again in the app.</p>
+        </body>
+        </html>
+        """;
+
+    /// <summary>
+    /// Parses a URL-encoded form body (key=value&amp;key2=value2) into a dictionary.
+    /// </summary>
+    private static Dictionary<string, string> ParseFormUrlEncoded(string body)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(body)) return result;
+
+        foreach (var pair in body.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eqIndex = pair.IndexOf('=');
+            if (eqIndex < 0)
+            {
+                result[Uri.UnescapeDataString(pair)] = string.Empty;
+            }
+            else
+            {
+                var key = Uri.UnescapeDataString(pair[..eqIndex]);
+                var value = Uri.UnescapeDataString(pair[(eqIndex + 1)..]);
+                result[key] = value;
+            }
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -213,25 +480,11 @@ public class ExternalIdAuthService
     /// Flow: implicit / hybrid — the authorization endpoint returns the id_token
     /// (and optionally an access_token) directly in the redirect callback.
     /// No additional token-endpoint call is required on the client.
-    ///
-    /// Shape of the generated URL:
-    /// https://{TenantDomain}/{TenantPathSegment}/oauth2/v2.0/authorize
-    ///   ?client_id={ClientId}
-    ///   &response_type=id_token token
-    ///   &redirect_uri={RedirectUri}
-    ///   &response_mode=fragment
-    ///   &scope=openid profile email {DatasyncScope}
-    ///   &idp=Apple
-    ///   &state={random-guid}
-    ///   &nonce={random-guid}
-    ///   &domain_hint=apple
-    ///   &prompt=login (forced re-auth only)
-    ///   &max_age=0 (forced re-auth only)
     /// </summary>
-    private static string BuildAuthorizeUrl(bool forcePrompt)
+    private static string BuildAuthorizeUrl(string redirectUri, bool forcePrompt, out string state)
     {
         // Unique values per request to prevent replay attacks
-        var state = Guid.NewGuid().ToString("N");
+        state = Guid.NewGuid().ToString("N");
         var nonce = Guid.NewGuid().ToString("N");
 
         // Assemble query parameters in a readable, deterministic order
@@ -239,7 +492,7 @@ public class ExternalIdAuthService
         {
             ("client_id",      ClientId),
             ("response_type",  "id_token token"),
-            ("redirect_uri",   RedirectUri),
+            ("redirect_uri",   redirectUri),
             ("response_mode",  "fragment"),
             ("scope",          $"openid profile email {DatasyncScope}"),
             ("idp",            "Apple"),
@@ -269,22 +522,14 @@ public class ExternalIdAuthService
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Extracts id_token and access_token from the <see cref="WebAuthenticatorResult"/>
-    /// returned by the callback redirect, decodes the JWT claims, persists the
-    /// authentication state in Preferences, and returns a <see cref="UnifiedIdentity"/>.
-    ///
-    /// WebAuthenticator parses both query-string and URI-fragment parameters from
-    /// the callback URL and exposes them via <see cref="WebAuthenticatorResult.Properties"/>,
-    /// <see cref="WebAuthenticatorResult.IdToken"/>, and
-    /// <see cref="WebAuthenticatorResult.AccessToken"/> convenience properties.
+    /// Extracts id_token and access_token from the token parameters dictionary,
+    /// decodes the JWT claims, persists the authentication state in Preferences,
+    /// and returns a <see cref="UnifiedIdentity"/>.
     /// </summary>
-    private UnifiedIdentity? ParseAndStoreResult(WebAuthenticatorResult result, string provider)
+    private UnifiedIdentity? ParseAndStoreResult(IDictionary<string, string> properties, string provider)
     {
-        // Prefer convenience properties; fall back to raw Properties dictionary
-        var idToken = result.IdToken
-            ?? (result.Properties.TryGetValue("id_token", out var rawIdToken) ? rawIdToken : null);
-        var accessToken = result.AccessToken
-            ?? (result.Properties.TryGetValue("access_token", out var rawAccessToken) ? rawAccessToken : null);
+        properties.TryGetValue("id_token", out var idToken);
+        properties.TryGetValue("access_token", out var accessToken);
 
         if (string.IsNullOrEmpty(idToken) && string.IsNullOrEmpty(accessToken))
         {
