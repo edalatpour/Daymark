@@ -41,7 +41,7 @@
                 <Setter Property="VerticalTextAlignment"
                         Value="Center"/>
                 <Setter Property="TextColor"
-                        Value="{DynamicResource Ink}"/>
+                        Value="{DynamicResource UserText}"/>
         </Style>
 
         <Style x:Key="HandwritingEditor"
@@ -53,7 +53,7 @@
                 <Setter Property="FontAutoScalingEnabled"
                         Value="False"/>
                 <Setter Property="TextColor"
-                        Value="{DynamicResource Ink}"/>
+                        Value="{DynamicResource UserText}"/>
         </Style>
 
         <Style x:Key="DateText"
