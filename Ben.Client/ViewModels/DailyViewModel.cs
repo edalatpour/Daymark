@@ -1023,7 +1023,16 @@ public class DailyViewModel : INotifyPropertyChanged
 
             task.Priority = string.IsNullOrWhiteSpace(priority) ? "A" : priority;
             task.Order = Math.Max(1, order);
-            SortTasksInMemory();
+
+            // Apply the same reordering logic for new tasks as we do for existing tasks
+            if (isNewTask)
+            {
+                await ApplyTaskPlacementAsync(task, task.Priority, task.Order, triggerSync: false);
+            }
+            else
+            {
+                SortTasksInMemory();
+            }
 
             await UpdateStatus();
             shouldRunPostSaveFlow = true;
