@@ -5,7 +5,7 @@
              x:Class="Ben.Views.DailyHostPage"
              x:DataType="viewModels:DailyViewModel"
              x:Name="HostPage"
-             SafeAreaEdges="None"
+             SafeAreaEdges="All"
              BackgroundColor="Transparent">
 
   <Grid x:Name="RootGrid"
