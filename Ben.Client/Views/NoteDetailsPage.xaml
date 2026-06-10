@@ -6,7 +6,8 @@
 
     <Grid Style="{DynamicResource PaperRootGrid}">
 
-        <Grid Padding="{DynamicResource SpacingLg}"
+        <Grid x:Name="LayoutGrid"
+              Padding="{DynamicResource SpacingLg}"
               HorizontalOptions="Fill"
               RowDefinitions="Auto,*,Auto"
               RowSpacing="{DynamicResource SpacingMd}">
@@ -25,7 +26,8 @@
                     <RoundRectangle CornerRadius="{DynamicResource ListCardCornerRadius}"/>
                 </Border.StrokeShape>
 
-                <ScrollView HorizontalOptions="Fill"
+                <ScrollView x:Name="FormScrollView"
+                            HorizontalOptions="Fill"
                             VerticalOptions="Fill">
 
                     <Grid BackgroundColor="{DynamicResource WritingPaper}"

@@ -9,7 +9,7 @@
              Background="Transparent">
 
     <Grid Background="Transparent"
-            SafeAreaEdges="SoftInput">
+          SafeAreaEdges="All">
 
         <Grid Background="Transparent"
               Padding="{DynamicResource SpacingLg}"

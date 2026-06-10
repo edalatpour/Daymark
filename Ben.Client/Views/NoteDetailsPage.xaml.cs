@@ -3,6 +3,11 @@ namespace Ben.Views;
 using Ben.Models;
 using Ben.Services;
 using Ben.ViewModels;
+#if IOS
+using Foundation;
+using CoreGraphics;
+using UIKit;
+#endif
 
 #nullable enable
 
@@ -12,6 +17,14 @@ public partial class NoteDetailsPage : ContentPage
     private readonly NoteItem _note;
     private readonly bool _isNewNote;
     private bool _isSaving;
+    private Thickness _baseLayoutPadding;
+    private bool _hasBaseLayoutPadding;
+
+#if IOS
+    private NSObject? _keyboardWillShowObserver;
+    private NSObject? _keyboardWillHideObserver;
+    private NSObject? _keyboardWillChangeFrameObserver;
+#endif
 
     public NoteDetailsPage(DailyViewModel viewModel)
         : this(viewModel, note: null)
@@ -22,6 +35,7 @@ public partial class NoteDetailsPage : ContentPage
     {
         InitializeComponent();
         _viewModel = viewModel;
+        CaptureBaseLayoutPadding();
 
         if (note == null)
         {
@@ -43,6 +57,11 @@ public partial class NoteDetailsPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+#if IOS
+        SubscribeKeyboardNotifications();
+#endif
+
         Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(100), () =>
         {
             NoteEditor.Focus();
@@ -50,6 +69,16 @@ public partial class NoteDetailsPage : ContentPage
             NoteEditor.CursorPosition = length;
             NoteEditor.SelectionLength = 0;
         });
+    }
+
+    protected override void OnDisappearing()
+    {
+#if IOS
+        UnsubscribeKeyboardNotifications();
+#endif
+
+        ResetKeyboardInset();
+        base.OnDisappearing();
     }
 
     async void OnSaveClicked(object sender, EventArgs e)
@@ -121,4 +150,76 @@ public partial class NoteDetailsPage : ContentPage
     {
         await Navigation.PopModalAsync();
     }
+
+    void CaptureBaseLayoutPadding()
+    {
+        if (_hasBaseLayoutPadding)
+        {
+            return;
+        }
+
+        _baseLayoutPadding = LayoutGrid.Padding;
+        _hasBaseLayoutPadding = true;
+    }
+
+    void ResetKeyboardInset()
+    {
+        CaptureBaseLayoutPadding();
+        LayoutGrid.Padding = _baseLayoutPadding;
+    }
+
+    void ApplyKeyboardBottomInset(double bottomInset)
+    {
+        CaptureBaseLayoutPadding();
+        LayoutGrid.Padding = new Thickness(
+            _baseLayoutPadding.Left,
+            _baseLayoutPadding.Top,
+            _baseLayoutPadding.Right,
+            _baseLayoutPadding.Bottom + Math.Max(0, bottomInset));
+    }
+
+#if IOS
+    void SubscribeKeyboardNotifications()
+    {
+        if (_keyboardWillShowObserver != null)
+        {
+            return;
+        }
+
+        _keyboardWillShowObserver = UIKeyboard.Notifications.ObserveWillShow(OnKeyboardFrameChanged);
+        _keyboardWillChangeFrameObserver = UIKeyboard.Notifications.ObserveWillChangeFrame(OnKeyboardFrameChanged);
+        _keyboardWillHideObserver = UIKeyboard.Notifications.ObserveWillHide((_, __) => ResetKeyboardInset());
+    }
+
+    void UnsubscribeKeyboardNotifications()
+    {
+        _keyboardWillShowObserver?.Dispose();
+        _keyboardWillShowObserver = null;
+
+        _keyboardWillChangeFrameObserver?.Dispose();
+        _keyboardWillChangeFrameObserver = null;
+
+        _keyboardWillHideObserver?.Dispose();
+        _keyboardWillHideObserver = null;
+    }
+
+    void OnKeyboardFrameChanged(object? sender, UIKeyboardEventArgs args)
+    {
+        double overlap = GetKeyboardOverlap(args.FrameEnd);
+        ApplyKeyboardBottomInset(overlap);
+    }
+
+    double GetKeyboardOverlap(CGRect keyboardFrameInScreen)
+    {
+        if (Handler?.PlatformView is not UIViewController controller || controller.View?.Window == null)
+        {
+            return keyboardFrameInScreen.Height;
+        }
+
+        CGRect keyboardFrameInView = controller.View.ConvertRectFromView(keyboardFrameInScreen, null);
+        nfloat overlap = controller.View.Bounds.Bottom - keyboardFrameInView.Top;
+        overlap = NMath.Max(0, overlap - controller.View.SafeAreaInsets.Bottom);
+        return overlap;
+    }
+#endif
 }
