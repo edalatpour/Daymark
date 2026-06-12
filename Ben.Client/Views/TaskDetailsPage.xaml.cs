@@ -9,9 +9,8 @@ public partial class TaskDetailsPage : ContentPage
 {
     static readonly string[] StatusValues = { "NotStarted", "InProgress", "Completed", "Forwarded", "Deleted" };
     static readonly string[] PriorityValues = { "A", "B", "C" };
-    private const int LocalSaveRetryCount = 3;
-    private static readonly TimeSpan LocalSaveRetryDelay = TimeSpan.FromMilliseconds(350);
     private static readonly TimeSpan EditSessionSyncSuppression = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan SaveCloseSyncSuppression = TimeSpan.FromSeconds(8);
 
     private readonly DailyViewModel _viewModel;
     private readonly TaskItem _task;
@@ -264,15 +263,17 @@ public partial class TaskDetailsPage : ContentPage
 
             // Local save should complete before close, but sync should stay out of the way.
             Stopwatch suppressStopwatch = Stopwatch.StartNew();
-            _viewModel.SuppressSyncForLocalSave(TimeSpan.FromSeconds(8));
+            _viewModel.SuppressSyncForLocalSave(SaveCloseSyncSuppression);
             LogTaskSaveTiming(saveTraceId, "page.preclose.suppress-sync", suppressStopwatch.ElapsedMilliseconds);
 
             // Save to local database before closing the modal.
-            await SaveTaskLocallyWithRetryAsync(
+            await _viewModel.SaveTaskDetailsLocallyAsync(
+                _task,
                 title,
                 _selectedStatus,
                 selectedPriority,
                 _order,
+                _isNewTask,
                 forwardDestinationKey,
                 forwardedTaskSeed,
                 saveTraceId);
@@ -302,55 +303,6 @@ public partial class TaskDetailsPage : ContentPage
             SaveButton.IsEnabled = true;
             SaveButton.Opacity = 1.0;
         }
-    }
-
-    async Task SaveTaskLocallyWithRetryAsync(
-        string title,
-        string status,
-        string priority,
-        int order,
-        string? forwardDestinationKey,
-        ForwardedTaskSeed? forwardedTaskSeed,
-        string saveTraceId)
-    {
-        Exception? lastError = null;
-
-        for (int attempt = 1; attempt <= LocalSaveRetryCount; attempt++)
-        {
-            try
-            {
-                Stopwatch attemptStopwatch = Stopwatch.StartNew();
-                Console.WriteLine($"TaskSaveTiming[{saveTraceId}] page.preclose.local-save-attempt.start attempt={attempt}");
-
-                await _viewModel.SaveTaskDetailsLocallyAsync(
-                    _task,
-                    title,
-                    status,
-                    priority,
-                    order,
-                    _isNewTask,
-                    forwardDestinationKey,
-                    forwardedTaskSeed,
-                    saveTraceId);
-
-                LogTaskSaveTiming(saveTraceId, "page.preclose.local-save-attempt.success", attemptStopwatch.ElapsedMilliseconds, $"attempt={attempt}");
-                return;
-            }
-            catch (Exception ex)
-            {
-                lastError = ex;
-                Console.WriteLine($"TaskSaveTiming[{saveTraceId}] page.preclose.local-save-attempt.failure attempt={attempt} error={ex.GetType().Name}:{ex.Message}");
-
-                if (attempt == LocalSaveRetryCount)
-                {
-                    break;
-                }
-
-                await Task.Delay(LocalSaveRetryDelay);
-            }
-        }
-
-        throw lastError ?? new InvalidOperationException("Local task save failed.");
     }
 
     static void LogTaskSaveTiming(string traceId, string step, long elapsedMilliseconds, string? details = null)
