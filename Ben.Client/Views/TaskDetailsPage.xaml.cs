@@ -10,6 +10,7 @@ public partial class TaskDetailsPage : ContentPage
     static readonly string[] StatusValues = { "NotStarted", "InProgress", "Completed", "Forwarded", "Deleted" };
     static readonly string[] PriorityValues = { "A", "B", "C" };
     private static readonly TimeSpan EditSessionSyncSuppression = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan SaveCloseSyncSuppression = TimeSpan.FromSeconds(8);
 
     private readonly DailyViewModel _viewModel;
     private readonly TaskItem _task;
@@ -262,7 +263,7 @@ public partial class TaskDetailsPage : ContentPage
 
             // Local save should complete before close, but sync should stay out of the way.
             Stopwatch suppressStopwatch = Stopwatch.StartNew();
-            _viewModel.SuppressSyncForLocalSave(TimeSpan.FromSeconds(8));
+            _viewModel.SuppressSyncForLocalSave(SaveCloseSyncSuppression);
             LogTaskSaveTiming(saveTraceId, "page.preclose.suppress-sync", suppressStopwatch.ElapsedMilliseconds);
 
             // Save to local database before closing the modal.

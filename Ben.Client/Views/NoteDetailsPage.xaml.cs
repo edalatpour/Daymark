@@ -15,6 +15,7 @@ using UIKit;
 public partial class NoteDetailsPage : ContentPage
 {
     private static readonly TimeSpan EditSessionSyncSuppression = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan SaveCloseSyncSuppression = TimeSpan.FromSeconds(8);
 
     private readonly DailyViewModel _viewModel;
     private readonly NoteItem _note;
@@ -106,7 +107,7 @@ public partial class NoteDetailsPage : ContentPage
             LogNoteSaveTiming(saveTraceId, "page.preclose.begin", preCloseStopwatch.ElapsedMilliseconds, $"isNewNote={_isNewNote}");
 
             Stopwatch suppressStopwatch = Stopwatch.StartNew();
-            _viewModel.SuppressSyncForLocalSave(TimeSpan.FromSeconds(8));
+            _viewModel.SuppressSyncForLocalSave(SaveCloseSyncSuppression);
             LogNoteSaveTiming(saveTraceId, "page.preclose.suppress-sync", suppressStopwatch.ElapsedMilliseconds);
 
             string text = NormalizeText(NoteEditor.Text);
@@ -141,7 +142,7 @@ public partial class NoteDetailsPage : ContentPage
         catch (Exception ex)
         {
             Console.WriteLine($"NoteSaveTiming page.preclose.failed {ex.GetType().Name}: {ex.Message}");
-            await DisplayAlertAsync("Close failed", "The save status could not be confirmed because the page could not be closed. Please check the note and try again.", "OK");
+            await DisplayAlertAsync("Close failed", "Could not close the page. Please try again.", "OK");
         }
         finally
         {

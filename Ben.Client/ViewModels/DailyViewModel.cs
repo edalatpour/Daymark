@@ -1097,7 +1097,6 @@ public class DailyViewModel : INotifyPropertyChanged
         for (int attempt = 1; attempt <= LocalSaveRetryCount; attempt++)
         {
             Stopwatch attemptStopwatch = Stopwatch.StartNew();
-            logTiming(traceId, $"{step}.attempt.start", attemptStopwatch.ElapsedMilliseconds, $"attempt={attempt}");
 
             try
             {
