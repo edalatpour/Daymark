@@ -25,6 +25,8 @@ namespace Ben.ViewModels;
 public class DailyViewModel : INotifyPropertyChanged
 {
     private const int MaxProjectNameLength = 128;
+    private const int LocalSaveRetryCount = 3;
+    private static readonly TimeSpan LocalSaveRetryDelay = TimeSpan.FromMilliseconds(350);
     // private const string QuotesAssetPath = "Quotes/benjamin_franklin.csv";
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -966,35 +968,42 @@ public class DailyViewModel : INotifyPropertyChanged
 
         Console.WriteLine($"TaskSaveTiming[{traceId}] vm.preclose.begin isNewTask={isNewTask} status={task.Status} shouldForward={shouldForward}");
 
-        if (isNewTask)
-        {
-            Stopwatch addStopwatch = Stopwatch.StartNew();
-            await _repo.AddTaskAsync(task, triggerSync: false);
-            LogTaskSaveTiming(traceId, "vm.preclose.add-task", addStopwatch.ElapsedMilliseconds);
-        }
-        else if (CurrentDay?.Tasks != null && CurrentDay.Tasks.IndexOf(task) >= 0)
-        {
-            Stopwatch placementStopwatch = Stopwatch.StartNew();
-            await ApplyTaskPlacementAsync(task, task.Priority, task.Order, triggerSync: false, saveTraceId: traceId);
-            LogTaskSaveTiming(traceId, "vm.preclose.apply-placement", placementStopwatch.ElapsedMilliseconds);
-        }
-        else
-        {
-            Stopwatch updateStopwatch = Stopwatch.StartNew();
-            await _repo.UpdateTaskAsync(task, triggerSync: false);
-            LogTaskSaveTiming(traceId, "vm.preclose.update-task", updateStopwatch.ElapsedMilliseconds);
-        }
+        await ExecuteLocalSaveWithRetryAsync(
+            traceId,
+            "vm.preclose.local-save",
+            LogTaskSaveTiming,
+            async () =>
+            {
+                if (isNewTask)
+                {
+                    Stopwatch addStopwatch = Stopwatch.StartNew();
+                    await _repo.AddTaskAsync(task, triggerSync: false);
+                    LogTaskSaveTiming(traceId, "vm.preclose.add-task", addStopwatch.ElapsedMilliseconds);
+                }
+                else if (CurrentDay?.Tasks != null && CurrentDay.Tasks.IndexOf(task) >= 0)
+                {
+                    Stopwatch placementStopwatch = Stopwatch.StartNew();
+                    await ApplyTaskPlacementAsync(task, task.Priority, task.Order, triggerSync: false, saveTraceId: traceId);
+                    LogTaskSaveTiming(traceId, "vm.preclose.apply-placement", placementStopwatch.ElapsedMilliseconds);
+                }
+                else
+                {
+                    Stopwatch updateStopwatch = Stopwatch.StartNew();
+                    await _repo.UpdateTaskAsync(task, triggerSync: false);
+                    LogTaskSaveTiming(traceId, "vm.preclose.update-task", updateStopwatch.ElapsedMilliseconds);
+                }
 
-        if (shouldForward)
-        {
-            Stopwatch forwardStopwatch = Stopwatch.StartNew();
-            await _repo.ForwardTaskAsync(
-                task,
-                forwardDestinationKey!,
-                triggerSync: false,
-                forwardedTaskSeed: forwardedTaskSeed);
-            LogTaskSaveTiming(traceId, "vm.preclose.forward", forwardStopwatch.ElapsedMilliseconds);
-        }
+                if (shouldForward)
+                {
+                    Stopwatch forwardStopwatch = Stopwatch.StartNew();
+                    await _repo.ForwardTaskAsync(
+                        task,
+                        forwardDestinationKey!,
+                        triggerSync: false,
+                        forwardedTaskSeed: forwardedTaskSeed);
+                    LogTaskSaveTiming(traceId, "vm.preclose.forward", forwardStopwatch.ElapsedMilliseconds);
+                }
+            });
 
         LogTaskSaveTiming(traceId, "vm.preclose.total", totalStopwatch.ElapsedMilliseconds);
     }
@@ -1059,6 +1068,53 @@ public class DailyViewModel : INotifyPropertyChanged
         Console.WriteLine($"TaskSaveTiming[{traceId}] {step} {elapsedMilliseconds}ms {details}");
     }
 
+    static void LogNoteSaveTiming(string traceId, string step, long elapsedMilliseconds, string? details = null)
+    {
+        if (string.IsNullOrWhiteSpace(details))
+        {
+            Console.WriteLine($"NoteSaveTiming[{traceId}] {step} {elapsedMilliseconds}ms");
+            return;
+        }
+
+        Console.WriteLine($"NoteSaveTiming[{traceId}] {step} {elapsedMilliseconds}ms {details}");
+    }
+
+    async Task ExecuteLocalSaveWithRetryAsync(
+        string traceId,
+        string step,
+        Action<string, string, long, string?> logTiming,
+        Func<Task> saveOperation)
+    {
+        Exception? lastError = null;
+
+        for (int attempt = 1; attempt <= LocalSaveRetryCount; attempt++)
+        {
+            Stopwatch attemptStopwatch = Stopwatch.StartNew();
+            logTiming(traceId, $"{step}.attempt.start", 0, $"attempt={attempt}");
+
+            try
+            {
+                await saveOperation();
+                logTiming(traceId, $"{step}.attempt.success", attemptStopwatch.ElapsedMilliseconds, $"attempt={attempt}");
+                return;
+            }
+            catch (Exception ex)
+            {
+                lastError = ex;
+                logTiming(traceId, $"{step}.attempt.failure", attemptStopwatch.ElapsedMilliseconds, $"attempt={attempt} error={ex.GetType().Name}:{ex.Message}");
+
+                if (attempt == LocalSaveRetryCount)
+                {
+                    break;
+                }
+
+                await Task.Delay(LocalSaveRetryDelay);
+            }
+        }
+
+        throw lastError ?? new InvalidOperationException("Local save failed.");
+    }
+
     public Task<string?> GetTaskKeyByIdAsync(string taskId)
     {
         return _repo.GetTaskKeyByIdAsync(taskId);
@@ -1117,24 +1173,42 @@ public class DailyViewModel : INotifyPropertyChanged
         await UpdateStatus();
     }
 
-    public async Task SaveNoteDetailsLocallyAsync(NoteItem note, string text, bool isNewNote)
+    public async Task SaveNoteDetailsLocallyAsync(NoteItem note, string text, bool isNewNote, string? saveTraceId = null)
     {
+        Stopwatch totalStopwatch = Stopwatch.StartNew();
+        string traceId = string.IsNullOrWhiteSpace(saveTraceId) ? "no-trace" : saveTraceId;
+
         if (note == null || string.IsNullOrWhiteSpace(text))
         {
+            LogNoteSaveTiming(traceId, "vm.preclose.skipped", totalStopwatch.ElapsedMilliseconds, "reason=empty-note");
             return;
         }
 
         note.Key = CurrentDay?.Key ?? note.Key;
         note.Text = text;
+        LogNoteSaveTiming(traceId, "vm.preclose.begin", totalStopwatch.ElapsedMilliseconds, $"isNewNote={isNewNote}");
 
-        if (isNewNote)
-        {
-            note.Order = note.Order > 0 ? note.Order : GetNextNoteOrder();
-            await _repo.AddNoteAsync(note, triggerSync: false);
-            return;
-        }
+        await ExecuteLocalSaveWithRetryAsync(
+            traceId,
+            "vm.preclose.local-save",
+            LogNoteSaveTiming,
+            async () =>
+            {
+                if (isNewNote)
+                {
+                    note.Order = note.Order > 0 ? note.Order : GetNextNoteOrder();
+                    Stopwatch addStopwatch = Stopwatch.StartNew();
+                    await _repo.AddNoteAsync(note, triggerSync: false);
+                    LogNoteSaveTiming(traceId, "vm.preclose.add-note", addStopwatch.ElapsedMilliseconds);
+                    return;
+                }
 
-        await _repo.UpdateNoteAsync(note, triggerSync: false);
+                Stopwatch updateStopwatch = Stopwatch.StartNew();
+                await _repo.UpdateNoteAsync(note, triggerSync: false);
+                LogNoteSaveTiming(traceId, "vm.preclose.update-note", updateStopwatch.ElapsedMilliseconds);
+            });
+
+        LogNoteSaveTiming(traceId, "vm.preclose.total", totalStopwatch.ElapsedMilliseconds);
     }
 
     public async Task CompleteNoteSaveAfterCloseAsync(NoteItem note, bool isNewNote)

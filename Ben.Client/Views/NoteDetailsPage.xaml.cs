@@ -1,5 +1,6 @@
 namespace Ben.Views;
 
+using System.Diagnostics;
 using Ben.Models;
 using Ben.Services;
 using Ben.ViewModels;
@@ -13,6 +14,8 @@ using UIKit;
 
 public partial class NoteDetailsPage : ContentPage
 {
+    private static readonly TimeSpan EditSessionSyncSuppression = TimeSpan.FromSeconds(20);
+
     private readonly DailyViewModel _viewModel;
     private readonly NoteItem _note;
     private readonly bool _isNewNote;
@@ -58,6 +61,8 @@ public partial class NoteDetailsPage : ContentPage
     {
         base.OnAppearing();
 
+        _viewModel.SuppressSyncForLocalSave(EditSessionSyncSuppression);
+
 #if IOS
         SubscribeKeyboardNotifications();
 #endif
@@ -96,9 +101,18 @@ public partial class NoteDetailsPage : ContentPage
 
         try
         {
+            string saveTraceId = Guid.NewGuid().ToString("N")[..8];
+            Stopwatch preCloseStopwatch = Stopwatch.StartNew();
+            LogNoteSaveTiming(saveTraceId, "page.preclose.begin", preCloseStopwatch.ElapsedMilliseconds, $"isNewNote={_isNewNote}");
+
+            Stopwatch suppressStopwatch = Stopwatch.StartNew();
+            _viewModel.SuppressSyncForLocalSave(TimeSpan.FromSeconds(8));
+            LogNoteSaveTiming(saveTraceId, "page.preclose.suppress-sync", suppressStopwatch.ElapsedMilliseconds);
+
             string text = NormalizeText(NoteEditor.Text);
             if (string.IsNullOrEmpty(text))
             {
+                LogNoteSaveTiming(saveTraceId, "page.preclose.validation", preCloseStopwatch.ElapsedMilliseconds, "result=empty-note");
                 await DisplayAlertAsync("Validation", "Please enter note text.", "OK");
                 return;
             }
@@ -106,21 +120,28 @@ public partial class NoteDetailsPage : ContentPage
             string originalText = _note.Text;
             try
             {
-                await _viewModel.SaveNoteDetailsLocallyAsync(_note, text, _isNewNote);
+                await _viewModel.SaveNoteDetailsLocallyAsync(_note, text, _isNewNote, saveTraceId);
+                LogNoteSaveTiming(saveTraceId, "page.preclose.local-save-complete", preCloseStopwatch.ElapsedMilliseconds);
             }
-            catch
+            catch (Exception ex)
             {
                 _note.Text = originalText;
-                throw;
+                LogNoteSaveTiming(saveTraceId, "page.preclose.local-save-failed", preCloseStopwatch.ElapsedMilliseconds, $"{ex.GetType().Name}:{ex.Message}");
+                await DisplayAlertAsync("Save failed", "Could not save the note. Please try again.", "OK");
+                return;
             }
 
+            Stopwatch closeStopwatch = Stopwatch.StartNew();
             await Navigation.PopModalAsync();
+            LogNoteSaveTiming(saveTraceId, "page.preclose.modal-close", closeStopwatch.ElapsedMilliseconds);
+            LogNoteSaveTiming(saveTraceId, "page.preclose.total", preCloseStopwatch.ElapsedMilliseconds);
 
             _ = _viewModel.CompleteNoteSaveAfterCloseAsync(_note, _isNewNote);
         }
-        catch
+        catch (Exception ex)
         {
-            await DisplayAlertAsync("Save failed", "Could not save the note. Please try again.", "OK");
+            Console.WriteLine($"NoteSaveTiming page.preclose.failed {ex.GetType().Name}: {ex.Message}");
+            await DisplayAlertAsync("Save completed", "The note was saved, but the page could not be closed. Please try closing it again.", "OK");
         }
         finally
         {
@@ -144,6 +165,17 @@ public partial class NoteDetailsPage : ContentPage
             .Replace("\u200B", " ")
             .Replace("\uFEFF", " ")
             .Trim();
+    }
+
+    static void LogNoteSaveTiming(string traceId, string step, long elapsedMilliseconds, string? details = null)
+    {
+        if (string.IsNullOrWhiteSpace(details))
+        {
+            Console.WriteLine($"NoteSaveTiming[{traceId}] {step} {elapsedMilliseconds}ms");
+            return;
+        }
+
+        Console.WriteLine($"NoteSaveTiming[{traceId}] {step} {elapsedMilliseconds}ms {details}");
     }
 
     async void OnCancelClicked(object sender, EventArgs e)
