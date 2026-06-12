@@ -141,7 +141,7 @@ public partial class NoteDetailsPage : ContentPage
         catch (Exception ex)
         {
             Console.WriteLine($"NoteSaveTiming page.preclose.failed {ex.GetType().Name}: {ex.Message}");
-            await DisplayAlertAsync("Save completed", "The note was saved, but the page could not be closed. Please try closing it again.", "OK");
+            await DisplayAlertAsync("Close failed", "The save status could not be confirmed because the page could not be closed. Please check the note and try again.", "OK");
         }
         finally
         {

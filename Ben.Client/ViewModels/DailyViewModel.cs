@@ -942,7 +942,7 @@ public class DailyViewModel : INotifyPropertyChanged
         string? saveTraceId = null)
     {
         Stopwatch totalStopwatch = Stopwatch.StartNew();
-        string traceId = string.IsNullOrWhiteSpace(saveTraceId) ? "no-trace" : saveTraceId;
+        string traceId = GetSaveTraceId(saveTraceId);
 
         if (task == null)
         {
@@ -1079,6 +1079,13 @@ public class DailyViewModel : INotifyPropertyChanged
         Console.WriteLine($"NoteSaveTiming[{traceId}] {step} {elapsedMilliseconds}ms {details}");
     }
 
+    static string GetSaveTraceId(string? saveTraceId)
+    {
+        return string.IsNullOrWhiteSpace(saveTraceId)
+            ? Guid.NewGuid().ToString("N")[..8]
+            : saveTraceId;
+    }
+
     async Task ExecuteLocalSaveWithRetryAsync(
         string traceId,
         string step,
@@ -1090,7 +1097,7 @@ public class DailyViewModel : INotifyPropertyChanged
         for (int attempt = 1; attempt <= LocalSaveRetryCount; attempt++)
         {
             Stopwatch attemptStopwatch = Stopwatch.StartNew();
-            logTiming(traceId, $"{step}.attempt.start", 0, $"attempt={attempt}");
+            logTiming(traceId, $"{step}.attempt.start", attemptStopwatch.ElapsedMilliseconds, $"attempt={attempt}");
 
             try
             {
@@ -1176,7 +1183,7 @@ public class DailyViewModel : INotifyPropertyChanged
     public async Task SaveNoteDetailsLocallyAsync(NoteItem note, string text, bool isNewNote, string? saveTraceId = null)
     {
         Stopwatch totalStopwatch = Stopwatch.StartNew();
-        string traceId = string.IsNullOrWhiteSpace(saveTraceId) ? "no-trace" : saveTraceId;
+        string traceId = GetSaveTraceId(saveTraceId);
 
         if (note == null || string.IsNullOrWhiteSpace(text))
         {
