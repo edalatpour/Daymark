@@ -4,6 +4,11 @@ using System.Diagnostics;
 using Ben.Models;
 using Ben.Services;
 using Ben.ViewModels;
+#if IOS
+using Foundation;
+using CoreGraphics;
+using UIKit;
+#endif
 
 public partial class TaskDetailsPage : ContentPage
 {
@@ -23,11 +28,20 @@ public partial class TaskDetailsPage : ContentPage
     private string _selectedStatus = "NotStarted";
     private string? _selectedForwardKey;
     private bool _isSaving;
+    private Thickness _baseLayoutPadding;
+    private bool _hasBaseLayoutPadding;
+
+#if IOS
+    private NSObject? _keyboardWillShowObserver;
+    private NSObject? _keyboardWillHideObserver;
+    private NSObject? _keyboardWillChangeFrameObserver;
+#endif
 
     public TaskDetailsPage(DailyViewModel viewModel, TaskItem? task = null)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        CaptureBaseLayoutPadding();
 
         if (task == null)
         {
@@ -72,6 +86,10 @@ public partial class TaskDetailsPage : ContentPage
     {
         base.OnAppearing();
 
+#if IOS
+        SubscribeKeyboardNotifications();
+#endif
+
         // Suppress background sync while the user is actively editing to reduce
         // sqlite gate contention when Save is pressed.
         _viewModel.SuppressSyncForLocalSave(EditSessionSyncSuppression);
@@ -87,6 +105,16 @@ public partial class TaskDetailsPage : ContentPage
                 TitleEntry.SelectionLength = 0;
             }
         });
+    }
+
+    protected override void OnDisappearing()
+    {
+#if IOS
+        UnsubscribeKeyboardNotifications();
+#endif
+
+        ResetKeyboardInset();
+        base.OnDisappearing();
     }
 
     async Task InitializeParentTaskDateAsync()
@@ -320,6 +348,83 @@ public partial class TaskDetailsPage : ContentPage
     {
         await Navigation.PopModalAsync();
     }
+
+    void CaptureBaseLayoutPadding()
+    {
+        if (_hasBaseLayoutPadding)
+        {
+            return;
+        }
+
+        _baseLayoutPadding = LayoutGrid.Padding;
+        _hasBaseLayoutPadding = true;
+    }
+
+    void ResetKeyboardInset()
+    {
+        CaptureBaseLayoutPadding();
+        LayoutGrid.Padding = _baseLayoutPadding;
+    }
+
+    void ApplyKeyboardBottomInset(double bottomInset)
+    {
+        CaptureBaseLayoutPadding();
+        LayoutGrid.Padding = new Thickness(
+            _baseLayoutPadding.Left,
+            _baseLayoutPadding.Top,
+            _baseLayoutPadding.Right,
+            _baseLayoutPadding.Bottom + Math.Max(0, bottomInset));
+    }
+
+#if IOS
+    void SubscribeKeyboardNotifications()
+    {
+        if (_keyboardWillShowObserver != null)
+        {
+            return;
+        }
+
+        _keyboardWillShowObserver = UIKeyboard.Notifications.ObserveWillShow(OnKeyboardFrameChanged);
+        _keyboardWillChangeFrameObserver = UIKeyboard.Notifications.ObserveWillChangeFrame(OnKeyboardFrameChanged);
+        _keyboardWillHideObserver = UIKeyboard.Notifications.ObserveWillHide((_, __) => ResetKeyboardInset());
+    }
+
+    void UnsubscribeKeyboardNotifications()
+    {
+        _keyboardWillShowObserver?.Dispose();
+        _keyboardWillShowObserver = null;
+
+        _keyboardWillChangeFrameObserver?.Dispose();
+        _keyboardWillChangeFrameObserver = null;
+
+        _keyboardWillHideObserver?.Dispose();
+        _keyboardWillHideObserver = null;
+    }
+
+    void OnKeyboardFrameChanged(object? sender, UIKeyboardEventArgs args)
+    {
+        double overlap = GetKeyboardOverlap(args.FrameEnd);
+        ApplyKeyboardBottomInset(overlap);
+    }
+
+    double GetKeyboardOverlap(CGRect keyboardFrameInScreen)
+    {
+        if (Handler?.PlatformView is not UIViewController controller || controller.View?.Window == null)
+        {
+            return keyboardFrameInScreen.Height;
+        }
+
+        CGRect keyboardFrameInView = controller.View.ConvertRectFromView(keyboardFrameInScreen, null);
+        nfloat overlap = controller.View.Bounds.Bottom - keyboardFrameInView.Top;
+        overlap -= controller.View.SafeAreaInsets.Bottom;
+        if (overlap < 0)
+        {
+            overlap = 0;
+        }
+
+        return overlap;
+    }
+#endif
 
     static bool IsUnplannedTask(TaskItem task)
     {

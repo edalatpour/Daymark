@@ -5,11 +5,11 @@
              x:Class="Ben.Views.DailyHostPage"
              x:DataType="viewModels:DailyViewModel"
              x:Name="HostPage"
-             SafeAreaEdges="All"
+             SafeAreaEdges="None"
              BackgroundColor="Transparent">
 
   <Grid x:Name="RootGrid"
-        SafeAreaEdges="All"
+        SafeAreaEdges="None"
         BackgroundColor="{DynamicResource Paper}"
         RowDefinitions="*,Auto">
 

@@ -251,7 +251,11 @@ public partial class NoteDetailsPage : ContentPage
 
         CGRect keyboardFrameInView = controller.View.ConvertRectFromView(keyboardFrameInScreen, null);
         nfloat overlap = controller.View.Bounds.Bottom - keyboardFrameInView.Top;
-        overlap = NMath.Max(0, overlap - controller.View.SafeAreaInsets.Bottom);
+        overlap -= controller.View.SafeAreaInsets.Bottom;
+        if (overlap < 0)
+        {
+            overlap = 0;
+        }
         return overlap;
     }
 #endif
