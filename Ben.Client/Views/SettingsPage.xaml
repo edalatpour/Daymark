@@ -36,7 +36,7 @@
 
                     <Grid BackgroundColor="{DynamicResource WritingPaper}"
                           Padding="{DynamicResource SpacingLg}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                           RowSpacing="{DynamicResource SpacingLg}">
 
                         <!-- Authentication -->
@@ -240,6 +240,13 @@
                         </VerticalStackLayout>
 
                         <Label Grid.Row="6"
+                               Text="{Binding ApplicationDisplayVersion, StringFormat='Version: {0}'}"
+                               FontSize="12"
+                               TextColor="{DynamicResource Link}"
+                               HorizontalOptions="Center"
+                               Padding="{DynamicResource SectionHeaderPadding}"/>
+
+                        <Label Grid.Row="7"
                                Text="About Daymark"
                                FontSize="14"
                                TextColor="{DynamicResource Link}"

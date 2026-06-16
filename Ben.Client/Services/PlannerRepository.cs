@@ -195,6 +195,19 @@ public class PlannerRepository
             .FirstOrDefaultAsync();
     }
 
+    public Task<string?> GetNoteTextByIdAsync(string noteId)
+    {
+        if (string.IsNullOrWhiteSpace(noteId))
+        {
+            return Task.FromResult<string?>(null);
+        }
+
+        return _db.Notes
+            .Where(note => note.Id == noteId)
+            .Select(note => note.Text)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<string?> GetProjectKeyByIdAsync(string projectId)
     {
         if (string.IsNullOrWhiteSpace(projectId))
@@ -836,7 +849,16 @@ WHERE [Id] = '{sourceTaskIdLiteral}'
         await WaitForWriteAccessAsync();
         try
         {
-            _db.Notes.Update(note);
+            bool exists = await _db.Notes.AnyAsync(existing => existing.Id == note.Id);
+            if (exists)
+            {
+                _db.Notes.Update(note);
+            }
+            else
+            {
+                _db.Notes.Add(note);
+            }
+
             await _db.SaveChangesAsync();
         }
         catch (Exception ex)

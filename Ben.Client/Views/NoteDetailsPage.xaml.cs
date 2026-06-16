@@ -15,12 +15,14 @@ using UIKit;
 public partial class NoteDetailsPage : ContentPage
 {
     private static readonly TimeSpan EditSessionSyncSuppression = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan EditSessionSyncSuppressionRefresh = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan SaveCloseSyncSuppression = TimeSpan.FromSeconds(8);
 
     private readonly DailyViewModel _viewModel;
     private readonly NoteItem _note;
     private readonly bool _isNewNote;
     private bool _isSaving;
+    private IDispatcherTimer? _syncSuppressionRefreshTimer;
     private Thickness _baseLayoutPadding;
     private bool _hasBaseLayoutPadding;
 
@@ -63,6 +65,7 @@ public partial class NoteDetailsPage : ContentPage
         base.OnAppearing();
 
         _viewModel.SuppressSyncForLocalSave(EditSessionSyncSuppression);
+        StartSyncSuppressionRefreshTimer();
 
 #if IOS
         SubscribeKeyboardNotifications();
@@ -79,6 +82,8 @@ public partial class NoteDetailsPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        StopSyncSuppressionRefreshTimer();
+
 #if IOS
         UnsubscribeKeyboardNotifications();
 #endif
@@ -122,6 +127,14 @@ public partial class NoteDetailsPage : ContentPage
             try
             {
                 await _viewModel.SaveNoteDetailsLocallyAsync(_note, text, _isNewNote, saveTraceId);
+                bool verified = await _viewModel.VerifyNoteDetailsSavedLocallyAsync(_note, text, saveTraceId);
+                if (!verified)
+                {
+                    LogNoteSaveTiming(saveTraceId, "page.preclose.local-save-verification-failed", preCloseStopwatch.ElapsedMilliseconds);
+                    await DisplayAlertAsync("Save failed", "Could not verify note persistence. Please try again.", "OK");
+                    return;
+                }
+
                 LogNoteSaveTiming(saveTraceId, "page.preclose.local-save-complete", preCloseStopwatch.ElapsedMilliseconds);
             }
             catch (Exception ex)
@@ -182,6 +195,42 @@ public partial class NoteDetailsPage : ContentPage
     async void OnCancelClicked(object sender, EventArgs e)
     {
         await Navigation.PopModalAsync();
+    }
+
+    void StartSyncSuppressionRefreshTimer()
+    {
+        if (_syncSuppressionRefreshTimer != null)
+        {
+            return;
+        }
+
+        _syncSuppressionRefreshTimer = Dispatcher.CreateTimer();
+        _syncSuppressionRefreshTimer.Interval = EditSessionSyncSuppressionRefresh;
+        _syncSuppressionRefreshTimer.IsRepeating = true;
+        _syncSuppressionRefreshTimer.Tick += OnSyncSuppressionRefreshTick;
+        _syncSuppressionRefreshTimer.Start();
+    }
+
+    void StopSyncSuppressionRefreshTimer()
+    {
+        if (_syncSuppressionRefreshTimer == null)
+        {
+            return;
+        }
+
+        _syncSuppressionRefreshTimer.Tick -= OnSyncSuppressionRefreshTick;
+        _syncSuppressionRefreshTimer.Stop();
+        _syncSuppressionRefreshTimer = null;
+    }
+
+    void OnSyncSuppressionRefreshTick(object? sender, EventArgs e)
+    {
+        if (_isSaving)
+        {
+            return;
+        }
+
+        _viewModel.SuppressSyncForLocalSave(EditSessionSyncSuppression);
     }
 
     void CaptureBaseLayoutPadding()

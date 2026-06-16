@@ -1217,6 +1217,30 @@ public class DailyViewModel : INotifyPropertyChanged
         LogNoteSaveTiming(traceId, "vm.preclose.total", totalStopwatch.ElapsedMilliseconds);
     }
 
+    public async Task<bool> VerifyNoteDetailsSavedLocallyAsync(NoteItem note, string expectedText, string? saveTraceId = null)
+    {
+        string traceId = GetSaveTraceId(saveTraceId);
+
+        if (note == null || string.IsNullOrWhiteSpace(note.Id))
+        {
+            LogNoteSaveTiming(traceId, "vm.preclose.verify.failed", 0, "reason=missing-note-id");
+            return false;
+        }
+
+        Stopwatch verifyStopwatch = Stopwatch.StartNew();
+        string expectedNormalized = expectedText?.Trim() ?? string.Empty;
+        string? persistedText = await _repo.GetNoteTextByIdAsync(note.Id);
+        bool verified = string.Equals(persistedText?.Trim() ?? string.Empty, expectedNormalized, StringComparison.Ordinal);
+
+        LogNoteSaveTiming(
+            traceId,
+            verified ? "vm.preclose.verify.success" : "vm.preclose.verify.failed",
+            verifyStopwatch.ElapsedMilliseconds,
+            verified ? null : "reason=text-mismatch-or-missing");
+
+        return verified;
+    }
+
     public async Task CompleteNoteSaveAfterCloseAsync(NoteItem note, bool isNewNote)
     {
         bool shouldRunPostSaveFlow = false;

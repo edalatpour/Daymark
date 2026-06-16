@@ -31,8 +31,8 @@
 		<ApplicationId>com.edalatpour.ben</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>1.6.6</ApplicationDisplayVersion>
-		<ApplicationVersion>18</ApplicationVersion>
+		<ApplicationDisplayVersion>1.6.7</ApplicationDisplayVersion>
+		<ApplicationVersion>19</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>MSIX</WindowsPackageType>

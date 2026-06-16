@@ -1,5 +1,6 @@
 using Ben.Services;
 using Ben.ViewModels;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 
 namespace Ben.Views;
@@ -72,6 +73,7 @@ public partial class SettingsPage : ContentPage
     public List<ThemeOption> AvailableThemes => _availableThemes;
     public IReadOnlyList<AppFontOption> AvailableUserFonts => _userFontService.AvailableFonts;
     public DailyViewModel AuthViewModel => _dailyViewModel;
+    public string ApplicationDisplayVersion => AppInfo.Current.VersionString;
 
     public SettingsPage()
     {
