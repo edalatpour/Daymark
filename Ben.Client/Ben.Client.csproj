@@ -176,6 +176,10 @@
 	  <Folder Include="Resources\Quotes\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\Ben.PaperSync.Contracts\Ben.PaperSync.Contracts.csproj" />
+	</ItemGroup>
+
 	<!-- <ItemGroup>
 	  <Folder Include="Data/" />
 	  <Folder Include="Resources/Icons/" />

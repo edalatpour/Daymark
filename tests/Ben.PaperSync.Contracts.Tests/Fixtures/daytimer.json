@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "isPlannerPage": true,
+  "legibility": "fair",
+  "detectedPlannerType": "daytimer",
+  "pageDate": {
+    "value": "2026-10-03",
+    "confidenceLevel": "medium"
+  },
+  "tasks": [
+    {
+      "text": "Send expense report",
+      "priority": "A",
+      "priorityOrder": null,
+      "completed": true,
+      "marker": "checked box",
+      "section": "To Do",
+      "readingOrder": 0,
+      "confidenceLevel": "high",
+      "status": "completed"
+    },
+    {
+      "text": "Reserve conference room",
+      "priority": null,
+      "priorityOrder": null,
+      "completed": false,
+      "marker": "blank box",
+      "section": "To Do",
+      "readingOrder": 1,
+      "confidenceLevel": "medium",
+      "status": "notStarted"
+    }
+  ],
+  "notes": [
+    {
+      "text": "Bring the blue folder.",
+      "section": "Notes",
+      "readingOrder": 0,
+      "confidenceLevel": "medium"
+    }
+  ],
+  "ignoredRegions": [
+    "time slots"
+  ]
+}

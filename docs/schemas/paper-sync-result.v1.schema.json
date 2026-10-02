@@ -1,0 +1,347 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://daymark.app/schemas/paper-sync-result.v1.schema.json",
+  "title": "Paper Sync result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "jobId",
+    "plannerType",
+    "modelDeployment",
+    "promptVersion",
+    "analyzedAt",
+    "pageDate",
+    "overallConfidence",
+    "tasks",
+    "notes",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "jobId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "plannerType": {
+      "$ref": "#/$defs/plannerTypeSelection"
+    },
+    "modelDeployment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "promptVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "analyzedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "pageDate": {
+      "$ref": "#/$defs/pageDate"
+    },
+    "overallConfidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/task"
+      },
+      "maxItems": 100
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/note"
+      },
+      "maxItems": 50
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/warning"
+      }
+    }
+  },
+  "$defs": {
+    "plannerTypeSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested",
+        "detected"
+      ],
+      "properties": {
+        "requested": {
+          "enum": [
+            "auto",
+            "franklin",
+            "daytimer",
+            "generic"
+          ]
+        },
+        "detected": {
+          "enum": [
+            "franklin",
+            "daytimer",
+            "generic"
+          ]
+        }
+      }
+    },
+    "pageDate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "confidence",
+        "source"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "source": {
+          "enum": [
+            "model",
+            "userHint"
+          ]
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text",
+        "priority",
+        "priorityOrder",
+        "completed",
+        "marker",
+        "section",
+        "readingOrder",
+        "confidence",
+        "confidenceLevel",
+        "hasIllegibleText",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "priority": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "A",
+            "B",
+            "C",
+            null
+          ]
+        },
+        "priorityOrder": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 99
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "marker": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "section": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "readingOrder": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "confidenceLevel": {
+          "$ref": "#/$defs/confidenceLevel"
+        },
+        "hasIllegibleText": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/$defs/taskStatus"
+        },
+        "boundingBox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/boundingBox"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text",
+        "section",
+        "readingOrder",
+        "confidence",
+        "confidenceLevel",
+        "hasIllegibleText"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "section": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "readingOrder": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "confidenceLevel": {
+          "$ref": "#/$defs/confidenceLevel"
+        },
+        "hasIllegibleText": {
+          "type": "boolean"
+        },
+        "boundingBox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/boundingBox"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "boundingBox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "itemId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "confidenceLevel": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "taskStatus": {
+      "enum": [
+        "notStarted",
+        "inProgress",
+        "completed",
+        "forwarded",
+        "cancelled",
+        "delegated",
+        "unknown"
+      ]
+    }
+  }
+}
