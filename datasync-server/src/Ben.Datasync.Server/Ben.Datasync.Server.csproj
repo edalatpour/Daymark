@@ -28,4 +28,8 @@
   <ItemGroup>
     <RuntimeHostConfigurationOption Include="System.Runtime.Loader.UseRidGraph" Value="true" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Ben.PaperSync.Contracts\Ben.PaperSync.Contracts.csproj" />
+  </ItemGroup>
 </Project>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\docs\schemas\paper-sync-result.v1.schema.json"
+                      Link="Schemas\paper-sync-result.v1.schema.json"
+                      LogicalName="Ben.PaperSync.Contracts.Schemas.paper-sync-result.v1.schema.json" />
+    <EmbeddedResource Include="..\docs\schemas\paper-sync-llm-output.v1.schema.json"
+                      Link="Schemas\paper-sync-llm-output.v1.schema.json"
+                      LogicalName="Ben.PaperSync.Contracts.Schemas.paper-sync-llm-output.v1.schema.json" />
+  </ItemGroup>
+
+</Project>

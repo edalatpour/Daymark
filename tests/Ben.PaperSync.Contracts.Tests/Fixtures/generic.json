@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "isPlannerPage": true,
+  "legibility": "good",
+  "detectedPlannerType": "generic",
+  "pageDate": null,
+  "tasks": [
+    {
+      "text": "Pick up dry cleaning",
+      "priority": "C",
+      "priorityOrder": null,
+      "completed": false,
+      "marker": "blank checkbox",
+      "section": "Errands",
+      "readingOrder": 0,
+      "confidenceLevel": "high",
+      "status": "notStarted"
+    }
+  ],
+  "notes": [
+    {
+      "text": "Gift idea: trail map",
+      "section": "Ideas",
+      "readingOrder": 0,
+      "confidenceLevel": "high"
+    }
+  ],
+  "ignoredRegions": [
+    "calendar"
+  ]
+}

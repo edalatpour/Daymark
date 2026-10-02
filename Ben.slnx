@@ -4,13 +4,16 @@
     <Platform Name="ARM64" />
     <Platform Name="x64" />
   </Configurations>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ben.PaperSync.Contracts.Tests/Ben.PaperSync.Contracts.Tests.csproj" />
+  </Folder>
   <Project Path="Ben.Client/Ben.Client.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
-    <Build Solution="Debug|Any CPU" Project="true" />
     <Deploy Solution="*|ARM64" />
     <Deploy Solution="*|x64" />
     <Deploy Solution="Debug|Any CPU" />
   </Project>
+  <Project Path="Ben.PaperSync.Contracts/Ben.PaperSync.Contracts.csproj" />
   <Project Path="datasync-server/src/Ben.Datasync.Server/Ben.Datasync.Server.csproj" />
 </Solution>

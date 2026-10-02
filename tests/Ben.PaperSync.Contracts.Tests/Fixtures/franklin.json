@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "isPlannerPage": true,
+  "legibility": "good",
+  "detectedPlannerType": "franklin",
+  "pageDate": {
+    "value": "2026-10-02",
+    "confidenceLevel": "high"
+  },
+  "tasks": [
+    {
+      "text": "Call Morgan about renewal",
+      "priority": "A",
+      "priorityOrder": 1,
+      "completed": true,
+      "marker": "✓",
+      "section": "Prioritized Daily Task List",
+      "readingOrder": 0,
+      "confidenceLevel": "high",
+      "status": "completed"
+    },
+    {
+      "text": "Draft [?] proposal",
+      "priority": "B",
+      "priorityOrder": 2,
+      "completed": false,
+      "marker": "→",
+      "section": "Prioritized Daily Task List",
+      "readingOrder": 1,
+      "confidenceLevel": "low",
+      "status": "forwarded"
+    }
+  ],
+  "notes": [
+    {
+      "text": "Morgan prefers a November start.",
+      "section": "Daily Record of Events",
+      "readingOrder": 0,
+      "confidenceLevel": "high"
+    }
+  ],
+  "ignoredRegions": [
+    "appointment schedule"
+  ]
+}
