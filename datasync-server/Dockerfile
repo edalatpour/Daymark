@@ -2,12 +2,15 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Restore dependencies first for better layer caching
-COPY src/Ben.Datasync.Server/Ben.Datasync.Server.csproj src/Ben.Datasync.Server/
-RUN dotnet restore src/Ben.Datasync.Server/Ben.Datasync.Server.csproj
+COPY Ben.PaperSync.Contracts/Ben.PaperSync.Contracts.csproj Ben.PaperSync.Contracts/
+COPY datasync-server/src/Ben.Datasync.Server/Ben.Datasync.Server.csproj datasync-server/src/Ben.Datasync.Server/
+RUN dotnet restore datasync-server/src/Ben.Datasync.Server/Ben.Datasync.Server.csproj
 
 # Copy source and publish
-COPY src/Ben.Datasync.Server/ src/Ben.Datasync.Server/
-RUN dotnet publish src/Ben.Datasync.Server/Ben.Datasync.Server.csproj \
+COPY Ben.PaperSync.Contracts/ Ben.PaperSync.Contracts/
+COPY docs/schemas/ docs/schemas/
+COPY datasync-server/src/Ben.Datasync.Server/ datasync-server/src/Ben.Datasync.Server/
+RUN dotnet publish datasync-server/src/Ben.Datasync.Server/Ben.Datasync.Server.csproj \
     -c Release \
     -o /app/publish \
     --no-restore

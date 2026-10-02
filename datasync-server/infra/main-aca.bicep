@@ -40,6 +40,53 @@ param azureAdClientId string
 @description('Azure AD / Entra ID authority base URL.')
 param azureAdInstance string = 'https://login.microsoftonline.com/'
 
+@description('Whether to provision and configure Paper Sync. Defaults to disabled.')
+param paperSyncEnabled bool = false
+
+@description('Optional Azure OpenAI account name. Defaults to a generated unique name.')
+param paperSyncOpenAIAccountName string = ''
+
+@description('Primary Azure OpenAI deployment name.')
+param paperSyncPrimaryDeploymentName string = 'paper-sync-primary'
+
+@description('Primary model name selected by the Paper Sync evaluation spike. Required when Paper Sync is enabled.')
+param paperSyncPrimaryModelName string = ''
+
+@description('Pinned primary model version selected by the Paper Sync evaluation spike. Required when Paper Sync is enabled.')
+param paperSyncPrimaryModelVersion string = ''
+
+@description('Primary model deployment SKU.')
+param paperSyncPrimaryDeploymentSku string = 'GlobalStandard'
+
+@minValue(1)
+@description('Primary model capacity in thousands of tokens per minute.')
+param paperSyncPrimaryDeploymentCapacity int = 10
+
+@description('Whether to provision an optional second model deployment for A/B evaluation.')
+param paperSyncSecondaryDeploymentEnabled bool = false
+
+@description('Optional secondary Azure OpenAI deployment name.')
+param paperSyncSecondaryDeploymentName string = ''
+
+@description('Optional secondary model name.')
+param paperSyncSecondaryModelName string = ''
+
+@description('Optional pinned secondary model version.')
+param paperSyncSecondaryModelVersion string = ''
+
+@description('Secondary model deployment SKU.')
+param paperSyncSecondaryDeploymentSku string = 'GlobalStandard'
+
+@minValue(1)
+@description('Secondary model capacity in thousands of tokens per minute.')
+param paperSyncSecondaryDeploymentCapacity int = 10
+
+@description('Optional Paper Sync storage account name. Defaults to a generated unique name.')
+param paperSyncStorageAccountName string = ''
+
+@description('Optional Paper Sync Application Insights name. Defaults to a generated unique name.')
+param paperSyncApplicationInsightsName string = ''
+
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
 
@@ -64,6 +111,25 @@ module resources './resources-aca.bicep' = {
     azureAdTenantId: azureAdTenantId
     azureAdClientId: azureAdClientId
     azureAdInstance: azureAdInstance
+    paperSyncEnabled: paperSyncEnabled
+    paperSyncOpenAIAccountName: !empty(paperSyncOpenAIAccountName) ? paperSyncOpenAIAccountName : 'oai-${resourceToken}'
+    paperSyncPrimaryDeploymentName: paperSyncPrimaryDeploymentName
+    paperSyncPrimaryModelName: paperSyncPrimaryModelName
+    paperSyncPrimaryModelVersion: paperSyncPrimaryModelVersion
+    paperSyncPrimaryDeploymentSku: paperSyncPrimaryDeploymentSku
+    paperSyncPrimaryDeploymentCapacity: paperSyncPrimaryDeploymentCapacity
+    paperSyncSecondaryDeploymentEnabled: paperSyncSecondaryDeploymentEnabled
+    paperSyncSecondaryDeploymentName: paperSyncSecondaryDeploymentName
+    paperSyncSecondaryModelName: paperSyncSecondaryModelName
+    paperSyncSecondaryModelVersion: paperSyncSecondaryModelVersion
+    paperSyncSecondaryDeploymentSku: paperSyncSecondaryDeploymentSku
+    paperSyncSecondaryDeploymentCapacity: paperSyncSecondaryDeploymentCapacity
+    paperSyncStorageAccountName: !empty(paperSyncStorageAccountName)
+      ? paperSyncStorageAccountName
+      : 'stps${resourceToken}'
+    paperSyncApplicationInsightsName: !empty(paperSyncApplicationInsightsName)
+      ? paperSyncApplicationInsightsName
+      : 'appi-ps-${resourceToken}'
   }
 }
 

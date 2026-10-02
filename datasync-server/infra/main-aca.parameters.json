@@ -19,6 +19,9 @@
     },
     "azureAdInstance": {
       "value": "https://benid.ciamlogin.com/"
+    },
+    "paperSyncEnabled": {
+      "value": false
     }
   }
 }
