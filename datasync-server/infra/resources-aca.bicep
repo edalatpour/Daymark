@@ -31,6 +31,53 @@ param azureAdClientId string
 @description('Azure AD / Entra ID authority base URL.')
 param azureAdInstance string = 'https://login.microsoftonline.com/'
 
+@description('Whether Paper Sync infrastructure and backend configuration are enabled.')
+param paperSyncEnabled bool = false
+
+@description('The Azure OpenAI account and custom subdomain name for Paper Sync.')
+param paperSyncOpenAIAccountName string = ''
+
+@description('The primary Azure OpenAI deployment name for Paper Sync.')
+param paperSyncPrimaryDeploymentName string = 'paper-sync-primary'
+
+@description('The primary model name selected by the Paper Sync evaluation spike.')
+param paperSyncPrimaryModelName string = ''
+
+@description('The pinned primary model version selected by the Paper Sync evaluation spike.')
+param paperSyncPrimaryModelVersion string = ''
+
+@description('The primary model deployment SKU.')
+param paperSyncPrimaryDeploymentSku string = 'GlobalStandard'
+
+@minValue(1)
+@description('The primary model deployment capacity in thousands of tokens per minute.')
+param paperSyncPrimaryDeploymentCapacity int = 10
+
+@description('Whether to provision a second deployment for A/B evaluation.')
+param paperSyncSecondaryDeploymentEnabled bool = false
+
+@description('The optional secondary Azure OpenAI deployment name.')
+param paperSyncSecondaryDeploymentName string = ''
+
+@description('The optional secondary model name.')
+param paperSyncSecondaryModelName string = ''
+
+@description('The optional pinned secondary model version.')
+param paperSyncSecondaryModelVersion string = ''
+
+@description('The secondary model deployment SKU.')
+param paperSyncSecondaryDeploymentSku string = 'GlobalStandard'
+
+@minValue(1)
+@description('The secondary model deployment capacity in thousands of tokens per minute.')
+param paperSyncSecondaryDeploymentCapacity int = 10
+
+@description('The Paper Sync storage account name.')
+param paperSyncStorageAccountName string = ''
+
+@description('The Paper Sync Application Insights resource name.')
+param paperSyncApplicationInsightsName string = ''
+
 @description('Tags applied to all resources.')
 param tags object = {}
 
@@ -67,6 +114,30 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-
   name: 'id-${containerAppName}'
   location: location
   tags: tags
+}
+
+module paperSync './papersync-aca.bicep' = if (paperSyncEnabled) {
+  name: 'paper-sync'
+  params: {
+    location: location
+    tags: tags
+    openAIAccountName: paperSyncOpenAIAccountName
+    primaryDeploymentName: paperSyncPrimaryDeploymentName
+    primaryModelName: paperSyncPrimaryModelName
+    primaryModelVersion: paperSyncPrimaryModelVersion
+    primaryDeploymentSku: paperSyncPrimaryDeploymentSku
+    primaryDeploymentCapacity: paperSyncPrimaryDeploymentCapacity
+    secondaryDeploymentEnabled: paperSyncSecondaryDeploymentEnabled
+    secondaryDeploymentName: paperSyncSecondaryDeploymentName
+    secondaryModelName: paperSyncSecondaryModelName
+    secondaryModelVersion: paperSyncSecondaryModelVersion
+    secondaryDeploymentSku: paperSyncSecondaryDeploymentSku
+    secondaryDeploymentCapacity: paperSyncSecondaryDeploymentCapacity
+    storageAccountName: paperSyncStorageAccountName
+    applicationInsightsName: paperSyncApplicationInsightsName
+    logAnalyticsWorkspaceId: logAnalytics.id
+    containerAppPrincipalId: managedIdentity.properties.principalId
+  }
 }
 
 // AcrPull built-in role
@@ -123,7 +194,7 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
       activeRevisionsMode: 'Single'
       ingress: {
         external: true
-        targetPort: 8080   // .NET 10 runtime image default non-root port
+        targetPort: 8080 // .NET 10 runtime image default non-root port
         transport: 'http'
         allowInsecure: false
       }
@@ -170,45 +241,80 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
               periodSeconds: 10
             }
           ]
-          env: [
-            {
-              name: 'ASPNETCORE_ENVIRONMENT'
-              value: 'Production'
-            }
-            {
-              name: 'ASPNETCORE_URLS'
-              value: 'http://+:8080'
-            }
-            {
-              // Injected from the ACA secret — never appears in plain text in config
-              name: 'ConnectionStrings__DefaultConnection'
-              secretRef: 'sql-connection-string'
-            }
-            {
-              name: 'AzureAd__Instance'
-              value: azureAdInstance
-            }
-            {
-              name: 'AzureAd__TenantId'
-              value: azureAdTenantId
-            }
-            {
-              name: 'AzureAd__ClientId'
-              value: azureAdClientId
-            }
-            {
-              name: 'AzureAd__Authority'
-              value: '${azureAdInstance}${azureAdTenantId}/v2.0'
-            }
-            {
-              name: 'AzureAd__Audience'
-              value: azureAdClientId
-            }
-          ]
+          env: concat(
+            [
+              {
+                name: 'ASPNETCORE_ENVIRONMENT'
+                value: 'Production'
+              }
+              {
+                name: 'ASPNETCORE_URLS'
+                value: 'http://+:8080'
+              }
+              {
+                // Injected from the ACA secret — never appears in plain text in config
+                name: 'ConnectionStrings__DefaultConnection'
+                secretRef: 'sql-connection-string'
+              }
+              {
+                name: 'AzureAd__Instance'
+                value: azureAdInstance
+              }
+              {
+                name: 'AzureAd__TenantId'
+                value: azureAdTenantId
+              }
+              {
+                name: 'AzureAd__ClientId'
+                value: azureAdClientId
+              }
+              {
+                name: 'AzureAd__Authority'
+                value: '${azureAdInstance}${azureAdTenantId}/v2.0'
+              }
+              {
+                name: 'AzureAd__Audience'
+                value: azureAdClientId
+              }
+            ],
+            paperSyncEnabled
+              ? [
+                  {
+                    name: 'AZURE_CLIENT_ID'
+                    value: managedIdentity.properties.clientId
+                  }
+                  {
+                    name: 'PaperSync__Enabled'
+                    value: 'true'
+                  }
+                  {
+                    name: 'PaperSync__BlobEndpoint'
+                    value: paperSync!.outputs.blobEndpoint
+                  }
+                  {
+                    name: 'PaperSync__OpenAI__Endpoint'
+                    value: paperSync!.outputs.openAIEndpoint
+                  }
+                  {
+                    name: 'PaperSync__OpenAI__Deployment'
+                    value: paperSync!.outputs.primaryDeploymentName
+                  }
+                  {
+                    name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+                    value: paperSync!.outputs.applicationInsightsConnectionString
+                  }
+                ]
+              : [
+                  {
+                    name: 'PaperSync__Enabled'
+                    value: 'false'
+                  }
+                ]
+          )
         }
       ]
       scale: {
-        minReplicas: 0   // Scale to zero when idle
+        minReplicas: 0 // Scale to zero when idle
         maxReplicas: 3
       }
     }
