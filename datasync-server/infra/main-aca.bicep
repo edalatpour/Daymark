@@ -40,6 +40,56 @@ param azureAdClientId string
 @description('Azure AD / Entra ID authority base URL.')
 param azureAdInstance string = 'https://login.microsoftonline.com/'
 
+@description('Whether to provision and configure Paper Sync. Defaults to disabled.')
+param paperSyncEnabled bool = false
+
+@description('Optional Foundry/AIServices account name. Defaults to a generated unique name.')
+param paperSyncFoundryAccountName string = ''
+
+@description('Chat-completion deployment name used by Content Understanding.')
+param paperSyncCompletionDeploymentName string = 'paper-sync-completion'
+
+@description('Supported chat-completion model selected by the Paper Sync evaluation spike.')
+param paperSyncCompletionModelName string = ''
+
+@description('Pinned chat-completion model version selected by the Paper Sync evaluation spike.')
+param paperSyncCompletionModelVersion string = ''
+
+@description('Chat-completion model deployment SKU.')
+param paperSyncCompletionDeploymentSku string = 'GlobalStandard'
+
+@minValue(1)
+@description('Chat-completion deployment capacity in thousands of tokens per minute.')
+param paperSyncCompletionDeploymentCapacity int = 10
+
+@description('Embedding deployment name used by Content Understanding.')
+param paperSyncEmbeddingDeploymentName string = 'paper-sync-embedding'
+
+@description('Supported embedding model selected by the Paper Sync evaluation spike.')
+param paperSyncEmbeddingModelName string = ''
+
+@description('Pinned embedding model version selected by the Paper Sync evaluation spike.')
+param paperSyncEmbeddingModelVersion string = ''
+
+@description('Embedding model deployment SKU.')
+param paperSyncEmbeddingDeploymentSku string = 'GlobalStandard'
+
+@minValue(1)
+@description('Embedding deployment capacity in thousands of tokens per minute.')
+param paperSyncEmbeddingDeploymentCapacity int = 10
+
+@description('Versioned Content Understanding analyzer ID.')
+param paperSyncAnalyzerId string = 'paper-sync-auto-v1'
+
+@description('Content Understanding GA API version.')
+param paperSyncContentUnderstandingApiVersion string = '2025-11-01'
+
+@description('Optional Paper Sync storage account name. Defaults to a generated unique name.')
+param paperSyncStorageAccountName string = ''
+
+@description('Optional Paper Sync Application Insights name. Defaults to a generated unique name.')
+param paperSyncApplicationInsightsName string = ''
+
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
 
@@ -64,6 +114,28 @@ module resources './resources-aca.bicep' = {
     azureAdTenantId: azureAdTenantId
     azureAdClientId: azureAdClientId
     azureAdInstance: azureAdInstance
+    paperSyncEnabled: paperSyncEnabled
+    paperSyncFoundryAccountName: !empty(paperSyncFoundryAccountName)
+      ? paperSyncFoundryAccountName
+      : 'aif-${resourceToken}'
+    paperSyncCompletionDeploymentName: paperSyncCompletionDeploymentName
+    paperSyncCompletionModelName: paperSyncCompletionModelName
+    paperSyncCompletionModelVersion: paperSyncCompletionModelVersion
+    paperSyncCompletionDeploymentSku: paperSyncCompletionDeploymentSku
+    paperSyncCompletionDeploymentCapacity: paperSyncCompletionDeploymentCapacity
+    paperSyncEmbeddingDeploymentName: paperSyncEmbeddingDeploymentName
+    paperSyncEmbeddingModelName: paperSyncEmbeddingModelName
+    paperSyncEmbeddingModelVersion: paperSyncEmbeddingModelVersion
+    paperSyncEmbeddingDeploymentSku: paperSyncEmbeddingDeploymentSku
+    paperSyncEmbeddingDeploymentCapacity: paperSyncEmbeddingDeploymentCapacity
+    paperSyncAnalyzerId: paperSyncAnalyzerId
+    paperSyncContentUnderstandingApiVersion: paperSyncContentUnderstandingApiVersion
+    paperSyncStorageAccountName: !empty(paperSyncStorageAccountName)
+      ? paperSyncStorageAccountName
+      : 'stps${resourceToken}'
+    paperSyncApplicationInsightsName: !empty(paperSyncApplicationInsightsName)
+      ? paperSyncApplicationInsightsName
+      : 'appi-ps-${resourceToken}'
   }
 }
 

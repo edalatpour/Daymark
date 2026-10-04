@@ -1,31 +1,137 @@
 {
-  "schemaVersion": "1.0",
-  "isPlannerPage": true,
-  "legibility": "good",
-  "detectedPlannerType": "generic",
-  "pageDate": null,
-  "tasks": [
-    {
-      "text": "Pick up dry cleaning",
-      "priority": "C",
-      "priorityOrder": null,
-      "completed": false,
-      "marker": "blank checkbox",
-      "section": "Errands",
-      "readingOrder": 0,
-      "confidenceLevel": "high",
-      "status": "notStarted"
-    }
-  ],
-  "notes": [
-    {
-      "text": "Gift idea: trail map",
-      "section": "Ideas",
-      "readingOrder": 0,
-      "confidenceLevel": "high"
-    }
-  ],
-  "ignoredRegions": [
-    "calendar"
-  ]
+  "id": "generic-operation",
+  "status": "Succeeded",
+  "result": {
+    "analyzerId": "paper-sync-auto-v1",
+    "apiVersion": "2025-11-01",
+    "createdAt": "2026-10-04T17:00:00Z",
+    "contents": [
+      {
+        "kind": "document",
+        "mimeType": "image/png",
+        "unit": "pixel",
+        "pages": [
+          {
+            "pageNumber": 1,
+            "width": 1600,
+            "height": 2200
+          }
+        ],
+        "fields": {
+          "isPlannerPage": {
+            "type": "boolean",
+            "confidence": 0.98,
+            "valueBoolean": true
+          },
+          "detectedPlannerType": {
+            "type": "string",
+            "confidence": 0.9,
+            "valueString": "generic"
+          },
+          "legibility": {
+            "type": "string",
+            "confidence": 0.92,
+            "valueString": "good"
+          },
+          "tasks": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "confidence": 0.91,
+                "valueObject": {
+                  "text": {
+                    "type": "string",
+                    "confidence": 0.93,
+                    "valueString": "Pick up dry cleaning"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "confidence": 0.92,
+                    "valueString": "C"
+                  },
+                  "completed": {
+                    "type": "boolean",
+                    "confidence": 0.95,
+                    "valueBoolean": false
+                  },
+                  "marker": {
+                    "type": "string",
+                    "confidence": 0.9,
+                    "valueString": "blank checkbox"
+                  },
+                  "section": {
+                    "type": "string",
+                    "confidence": 0.9,
+                    "valueString": "Errands"
+                  },
+                  "readingOrder": {
+                    "type": "integer",
+                    "confidence": 0.99,
+                    "valueInteger": 0
+                  },
+                  "status": {
+                    "type": "string",
+                    "confidence": 0.95,
+                    "valueString": "notStarted"
+                  },
+                  "hasIllegibleText": {
+                    "type": "boolean",
+                    "confidence": 0.99,
+                    "valueBoolean": false
+                  }
+                }
+              }
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "confidence": 0.9,
+                "valueObject": {
+                  "text": {
+                    "type": "string",
+                    "confidence": 0.92,
+                    "valueString": "Gift idea: trail map"
+                  },
+                  "section": {
+                    "type": "string",
+                    "confidence": 0.9,
+                    "valueString": "Ideas"
+                  },
+                  "readingOrder": {
+                    "type": "integer",
+                    "confidence": 0.99,
+                    "valueInteger": 0
+                  },
+                  "hasIllegibleText": {
+                    "type": "boolean",
+                    "confidence": 0.99,
+                    "valueBoolean": false
+                  }
+                }
+              }
+            ]
+          },
+          "ignoredRegions": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "string",
+                "valueString": "calendar"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "warnings": []
+  },
+  "usage": {
+    "documentPagesStandard": 1,
+    "contextualizationTokens": 500,
+    "tokens": {}
+  }
 }

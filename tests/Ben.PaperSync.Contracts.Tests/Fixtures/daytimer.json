@@ -1,45 +1,184 @@
 {
-  "schemaVersion": "1.0",
-  "isPlannerPage": true,
-  "legibility": "fair",
-  "detectedPlannerType": "daytimer",
-  "pageDate": {
-    "value": "2026-10-03",
-    "confidenceLevel": "medium"
+  "id": "daytimer-operation",
+  "status": "Succeeded",
+  "result": {
+    "analyzerId": "paper-sync-auto-v1",
+    "apiVersion": "2025-11-01",
+    "createdAt": "2026-10-03T17:00:00Z",
+    "contents": [
+      {
+        "kind": "document",
+        "mimeType": "image/jpeg",
+        "unit": "pixel",
+        "pages": [
+          {
+            "pageNumber": 1,
+            "width": 1800,
+            "height": 2400
+          }
+        ],
+        "fields": {
+          "isPlannerPage": {
+            "type": "boolean",
+            "confidence": 0.99,
+            "valueBoolean": true
+          },
+          "detectedPlannerType": {
+            "type": "string",
+            "confidence": 0.94,
+            "valueString": "daytimer"
+          },
+          "legibility": {
+            "type": "string",
+            "confidence": 0.8,
+            "valueString": "fair"
+          },
+          "pageDate": {
+            "type": "date",
+            "confidence": 0.78,
+            "valueDate": "2026-10-03"
+          },
+          "tasks": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "confidence": 0.92,
+                "source": "D(1,100,400,1300,400,1300,520,100,520)",
+                "valueObject": {
+                  "text": {
+                    "type": "string",
+                    "confidence": 0.94,
+                    "valueString": "Send expense report"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "confidence": 0.96,
+                    "valueString": "A"
+                  },
+                  "completed": {
+                    "type": "boolean",
+                    "confidence": 0.96,
+                    "valueBoolean": true
+                  },
+                  "marker": {
+                    "type": "string",
+                    "confidence": 0.93,
+                    "valueString": "checked box"
+                  },
+                  "section": {
+                    "type": "string",
+                    "confidence": 0.97,
+                    "valueString": "To Do"
+                  },
+                  "readingOrder": {
+                    "type": "integer",
+                    "confidence": 0.99,
+                    "valueInteger": 0
+                  },
+                  "status": {
+                    "type": "string",
+                    "confidence": 0.96,
+                    "valueString": "completed"
+                  },
+                  "hasIllegibleText": {
+                    "type": "boolean",
+                    "confidence": 0.99,
+                    "valueBoolean": false
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "confidence": 0.72,
+                "valueObject": {
+                  "text": {
+                    "type": "string",
+                    "confidence": 0.75,
+                    "valueString": "Reserve conference room"
+                  },
+                  "completed": {
+                    "type": "boolean",
+                    "confidence": 0.9,
+                    "valueBoolean": false
+                  },
+                  "marker": {
+                    "type": "string",
+                    "confidence": 0.86,
+                    "valueString": "blank box"
+                  },
+                  "section": {
+                    "type": "string",
+                    "confidence": 0.95,
+                    "valueString": "To Do"
+                  },
+                  "readingOrder": {
+                    "type": "integer",
+                    "confidence": 0.99,
+                    "valueInteger": 1
+                  },
+                  "status": {
+                    "type": "string",
+                    "confidence": 0.9,
+                    "valueString": "notStarted"
+                  },
+                  "hasIllegibleText": {
+                    "type": "boolean",
+                    "confidence": 0.99,
+                    "valueBoolean": false
+                  }
+                }
+              }
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "object",
+                "confidence": 0.7,
+                "valueObject": {
+                  "text": {
+                    "type": "string",
+                    "confidence": 0.72,
+                    "valueString": "Bring the blue folder."
+                  },
+                  "section": {
+                    "type": "string",
+                    "confidence": 0.9,
+                    "valueString": "Notes"
+                  },
+                  "readingOrder": {
+                    "type": "integer",
+                    "confidence": 0.99,
+                    "valueInteger": 0
+                  },
+                  "hasIllegibleText": {
+                    "type": "boolean",
+                    "confidence": 0.99,
+                    "valueBoolean": false
+                  }
+                }
+              }
+            ]
+          },
+          "ignoredRegions": {
+            "type": "array",
+            "valueArray": [
+              {
+                "type": "string",
+                "valueString": "time slots"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "warnings": []
   },
-  "tasks": [
-    {
-      "text": "Send expense report",
-      "priority": "A",
-      "priorityOrder": null,
-      "completed": true,
-      "marker": "checked box",
-      "section": "To Do",
-      "readingOrder": 0,
-      "confidenceLevel": "high",
-      "status": "completed"
-    },
-    {
-      "text": "Reserve conference room",
-      "priority": null,
-      "priorityOrder": null,
-      "completed": false,
-      "marker": "blank box",
-      "section": "To Do",
-      "readingOrder": 1,
-      "confidenceLevel": "medium",
-      "status": "notStarted"
-    }
-  ],
-  "notes": [
-    {
-      "text": "Bring the blue folder.",
-      "section": "Notes",
-      "readingOrder": 0,
-      "confidenceLevel": "medium"
-    }
-  ],
-  "ignoredRegions": [
-    "time slots"
-  ]
+  "usage": {
+    "documentPagesStandard": 1,
+    "contextualizationTokens": 700,
+    "tokens": {}
+  }
 }

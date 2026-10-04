@@ -10,9 +10,8 @@
     <EmbeddedResource Include="..\docs\schemas\paper-sync-result.v1.schema.json"
                       Link="Schemas\paper-sync-result.v1.schema.json"
                       LogicalName="Ben.PaperSync.Contracts.Schemas.paper-sync-result.v1.schema.json" />
-    <EmbeddedResource Include="..\docs\schemas\paper-sync-llm-output.v1.schema.json"
-                      Link="Schemas\paper-sync-llm-output.v1.schema.json"
-                      LogicalName="Ben.PaperSync.Contracts.Schemas.paper-sync-llm-output.v1.schema.json" />
+    <EmbeddedResource Include="Analyzers\paper-sync-auto-v1.json"
+                      LogicalName="Ben.PaperSync.Contracts.Analyzers.paper-sync-auto-v1.json" />
   </ItemGroup>
 
 </Project>

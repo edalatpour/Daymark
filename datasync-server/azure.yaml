@@ -21,7 +21,6 @@ services:
     language: csharp
     host: containerapp
     docker:
-      # Dockerfile is at the datasync-server root; context includes both
-      # the project source and any other files needed at build time.
-      path: ./Dockerfile
-      context: .
+      # The backend references the shared contracts project at repository root.
+      path: ./datasync-server/Dockerfile
+      context: ..
