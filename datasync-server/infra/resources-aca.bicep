@@ -34,43 +34,46 @@ param azureAdInstance string = 'https://login.microsoftonline.com/'
 @description('Whether Paper Sync infrastructure and backend configuration are enabled.')
 param paperSyncEnabled bool = false
 
-@description('The Azure OpenAI account and custom subdomain name for Paper Sync.')
-param paperSyncOpenAIAccountName string = ''
+@description('The Foundry/AIServices account and custom subdomain name for Paper Sync.')
+param paperSyncFoundryAccountName string = ''
 
-@description('The primary Azure OpenAI deployment name for Paper Sync.')
-param paperSyncPrimaryDeploymentName string = 'paper-sync-primary'
+@description('The chat-completion deployment name used by Content Understanding.')
+param paperSyncCompletionDeploymentName string = 'paper-sync-completion'
 
-@description('The primary model name selected by the Paper Sync evaluation spike.')
-param paperSyncPrimaryModelName string = ''
+@description('The supported chat-completion model selected by the Paper Sync evaluation spike.')
+param paperSyncCompletionModelName string = ''
 
-@description('The pinned primary model version selected by the Paper Sync evaluation spike.')
-param paperSyncPrimaryModelVersion string = ''
+@description('The pinned chat-completion model version selected by the Paper Sync evaluation spike.')
+param paperSyncCompletionModelVersion string = ''
 
-@description('The primary model deployment SKU.')
-param paperSyncPrimaryDeploymentSku string = 'GlobalStandard'
-
-@minValue(1)
-@description('The primary model deployment capacity in thousands of tokens per minute.')
-param paperSyncPrimaryDeploymentCapacity int = 10
-
-@description('Whether to provision a second deployment for A/B evaluation.')
-param paperSyncSecondaryDeploymentEnabled bool = false
-
-@description('The optional secondary Azure OpenAI deployment name.')
-param paperSyncSecondaryDeploymentName string = ''
-
-@description('The optional secondary model name.')
-param paperSyncSecondaryModelName string = ''
-
-@description('The optional pinned secondary model version.')
-param paperSyncSecondaryModelVersion string = ''
-
-@description('The secondary model deployment SKU.')
-param paperSyncSecondaryDeploymentSku string = 'GlobalStandard'
+@description('The chat-completion model deployment SKU.')
+param paperSyncCompletionDeploymentSku string = 'GlobalStandard'
 
 @minValue(1)
-@description('The secondary model deployment capacity in thousands of tokens per minute.')
-param paperSyncSecondaryDeploymentCapacity int = 10
+@description('The chat-completion deployment capacity in thousands of tokens per minute.')
+param paperSyncCompletionDeploymentCapacity int = 10
+
+@description('The embedding deployment name used by Content Understanding.')
+param paperSyncEmbeddingDeploymentName string = 'paper-sync-embedding'
+
+@description('The supported embedding model selected by the Paper Sync evaluation spike.')
+param paperSyncEmbeddingModelName string = ''
+
+@description('The pinned embedding model version selected by the Paper Sync evaluation spike.')
+param paperSyncEmbeddingModelVersion string = ''
+
+@description('The embedding model deployment SKU.')
+param paperSyncEmbeddingDeploymentSku string = 'GlobalStandard'
+
+@minValue(1)
+@description('The embedding deployment capacity in thousands of tokens per minute.')
+param paperSyncEmbeddingDeploymentCapacity int = 10
+
+@description('The versioned Content Understanding analyzer ID.')
+param paperSyncAnalyzerId string = 'paper-sync-auto-v1'
+
+@description('The Content Understanding GA API version.')
+param paperSyncContentUnderstandingApiVersion string = '2025-11-01'
 
 @description('The Paper Sync storage account name.')
 param paperSyncStorageAccountName string = ''
@@ -121,21 +124,23 @@ module paperSync './papersync-aca.bicep' = if (paperSyncEnabled) {
   params: {
     location: location
     tags: tags
-    openAIAccountName: paperSyncOpenAIAccountName
-    primaryDeploymentName: paperSyncPrimaryDeploymentName
-    primaryModelName: paperSyncPrimaryModelName
-    primaryModelVersion: paperSyncPrimaryModelVersion
-    primaryDeploymentSku: paperSyncPrimaryDeploymentSku
-    primaryDeploymentCapacity: paperSyncPrimaryDeploymentCapacity
-    secondaryDeploymentEnabled: paperSyncSecondaryDeploymentEnabled
-    secondaryDeploymentName: paperSyncSecondaryDeploymentName
-    secondaryModelName: paperSyncSecondaryModelName
-    secondaryModelVersion: paperSyncSecondaryModelVersion
-    secondaryDeploymentSku: paperSyncSecondaryDeploymentSku
-    secondaryDeploymentCapacity: paperSyncSecondaryDeploymentCapacity
+    foundryAccountName: paperSyncFoundryAccountName
+    completionDeploymentName: paperSyncCompletionDeploymentName
+    completionModelName: paperSyncCompletionModelName
+    completionModelVersion: paperSyncCompletionModelVersion
+    completionDeploymentSku: paperSyncCompletionDeploymentSku
+    completionDeploymentCapacity: paperSyncCompletionDeploymentCapacity
+    embeddingDeploymentName: paperSyncEmbeddingDeploymentName
+    embeddingModelName: paperSyncEmbeddingModelName
+    embeddingModelVersion: paperSyncEmbeddingModelVersion
+    embeddingDeploymentSku: paperSyncEmbeddingDeploymentSku
+    embeddingDeploymentCapacity: paperSyncEmbeddingDeploymentCapacity
+    analyzerId: paperSyncAnalyzerId
+    contentUnderstandingApiVersion: paperSyncContentUnderstandingApiVersion
     storageAccountName: paperSyncStorageAccountName
     applicationInsightsName: paperSyncApplicationInsightsName
     logAnalyticsWorkspaceId: logAnalytics.id
+    containerAppIdentityId: managedIdentity.id
     containerAppPrincipalId: managedIdentity.properties.principalId
   }
 }
@@ -292,12 +297,24 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
                     value: paperSync!.outputs.blobEndpoint
                   }
                   {
-                    name: 'PaperSync__OpenAI__Endpoint'
-                    value: paperSync!.outputs.openAIEndpoint
+                    name: 'PaperSync__ContentUnderstanding__Endpoint'
+                    value: paperSync!.outputs.contentUnderstandingEndpoint
                   }
                   {
-                    name: 'PaperSync__OpenAI__Deployment'
-                    value: paperSync!.outputs.primaryDeploymentName
+                    name: 'PaperSync__ContentUnderstanding__ApiVersion'
+                    value: paperSync!.outputs.contentUnderstandingApiVersion
+                  }
+                  {
+                    name: 'PaperSync__ContentUnderstanding__AnalyzerId'
+                    value: paperSync!.outputs.analyzerId
+                  }
+                  {
+                    name: 'PaperSync__ContentUnderstanding__CompletionDeployment'
+                    value: paperSync!.outputs.completionDeploymentName
+                  }
+                  {
+                    name: 'PaperSync__ContentUnderstanding__EmbeddingDeployment'
+                    value: paperSync!.outputs.embeddingDeploymentName
                   }
                   {
                     name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'

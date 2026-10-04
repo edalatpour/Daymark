@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text.Json;
 using Ben.PaperSync.Contracts;
 using Json.Schema;
@@ -7,9 +6,6 @@ namespace Ben.PaperSync.Contracts.Tests;
 
 public sealed class PaperSyncContractTests
 {
-    private static readonly Lazy<JsonSchema> LlmOutputSchema = new(
-        () => JsonSchema.FromText(ReadSchema(PaperSyncSchemaResources.OpenLlmOutputV1)));
-
     private static readonly Lazy<JsonSchema> ResultSchema = new(
         () => JsonSchema.FromText(ReadSchema(PaperSyncSchemaResources.OpenResultV1)));
 
@@ -23,37 +19,38 @@ public sealed class PaperSyncContractTests
 
     [Theory]
     [MemberData(nameof(PlannerFixtures))]
-    public void Model_fixture_round_trips_and_validates(
+    public void Provider_fixture_round_trips_maps_and_validates(
         string fixtureName,
         PlannerType requestedPlannerType,
         DetectedPlannerType expectedDetectedPlannerType)
     {
         var json = ReadFixture(fixtureName);
-        var output = JsonSerializer.Deserialize(
+        var operation = JsonSerializer.Deserialize(
             json,
-            PaperSyncJsonContext.Default.PaperSyncLlmOutput);
+            PaperSyncJsonContext.Default.ContentUnderstandingAnalyzeOperation);
 
-        Assert.NotNull(output);
-        Assert.Equal(expectedDetectedPlannerType, output.DetectedPlannerType);
-        AssertSchemaValid(LlmOutputSchema.Value, json);
+        Assert.NotNull(operation);
+        Assert.Equal("Succeeded", operation.Status);
+        Assert.Equal(PaperSyncSchemaVersions.ContentUnderstandingApiVersion, operation.Result!.ApiVersion);
 
         var roundTripJson = JsonSerializer.Serialize(
-            output,
-            PaperSyncJsonContext.Default.PaperSyncLlmOutput);
+            operation,
+            PaperSyncJsonContext.Default.ContentUnderstandingAnalyzeOperation);
         var roundTrip = JsonSerializer.Deserialize(
             roundTripJson,
-            PaperSyncJsonContext.Default.PaperSyncLlmOutput);
+            PaperSyncJsonContext.Default.ContentUnderstandingAnalyzeOperation);
 
-        Assert.Equivalent(output, roundTrip, strict: true);
+        Assert.Equivalent(operation, roundTrip, strict: true);
 
         var result = PaperSyncResultMapper.Map(
-            output,
+            operation,
             new PaperSyncMappingContext
             {
                 JobId = Guid.Parse("754029ec-0596-4873-82a4-21972f5ec099"),
                 RequestedPlannerType = requestedPlannerType,
-                ModelDeployment = "evaluation-model",
-                PromptVersion = "v1",
+                CompletionModelDeployment = "evaluation-completion",
+                EmbeddingModelDeployment = "evaluation-embedding",
+                AnalyzerVersion = PaperSyncSchemaVersions.AnalyzerV1,
                 AnalyzedAt = DateTimeOffset.Parse("2026-10-02T17:00:00Z"),
                 PageDateHint = new DateOnly(2026, 10, 4)
             });
@@ -62,6 +59,9 @@ public sealed class PaperSyncContractTests
             PaperSyncJsonContext.Default.PaperSyncResult);
 
         Assert.Equal(expectedDetectedPlannerType, result.PlannerType.Detected);
+        Assert.Equal("paper-sync-auto-v1", result.AnalyzerId);
+        Assert.Equal("evaluation-embedding", result.EmbeddingModelDeployment);
+        Assert.Contains(result.Warnings, warning => warning.Code == "IGNORED_REGION");
         AssertSchemaValid(ResultSchema.Value, resultJson);
         Assert.NotNull(JsonSerializer.Deserialize(
             resultJson,
@@ -69,35 +69,81 @@ public sealed class PaperSyncContractTests
     }
 
     [Fact]
-    public void Model_schema_requires_every_declared_property_and_rejects_extras()
+    public void Analyzer_definition_uses_document_grounding_and_required_fields()
     {
-        using var schema = JsonDocument.Parse(
-            ReadSchema(PaperSyncSchemaResources.OpenLlmOutputV1));
+        var analyzerJson = ReadSchema(PaperSyncSchemaResources.OpenAnalyzerV1);
+        var analyzer = JsonSerializer.Deserialize(
+            analyzerJson,
+            PaperSyncJsonContext.Default.ContentUnderstandingAnalyzerDefinition);
 
-        AssertStrictObjects(schema.RootElement);
+        Assert.NotNull(analyzer);
+        Assert.Equal("prebuilt-document", analyzer.BaseAnalyzerId);
+        Assert.True(analyzer.Config.EstimateFieldSourceAndConfidence);
+        Assert.Equal("prebuilt-analyzer-completion", analyzer.Models["completion"]);
+        Assert.Equal("prebuilt-analyzer-embedding", analyzer.Models["embedding"]);
+        Assert.Contains("isPlannerPage", analyzer.FieldSchema.Fields.Keys);
+        Assert.Contains("detectedPlannerType", analyzer.FieldSchema.Fields.Keys);
+        Assert.Contains("pageDate", analyzer.FieldSchema.Fields.Keys);
+        Assert.Contains("tasks", analyzer.FieldSchema.Fields.Keys);
+        Assert.Contains("notes", analyzer.FieldSchema.Fields.Keys);
+        Assert.Contains("ignoredRegions", analyzer.FieldSchema.Fields.Keys);
     }
 
     [Fact]
     public void Mapper_creates_stable_ids_and_preserves_illegible_marker()
     {
-        var output = JsonSerializer.Deserialize(
+        var operation = JsonSerializer.Deserialize(
             ReadFixture("franklin.json"),
-            PaperSyncJsonContext.Default.PaperSyncLlmOutput)!;
+            PaperSyncJsonContext.Default.ContentUnderstandingAnalyzeOperation)!;
         var context = new PaperSyncMappingContext
         {
             JobId = Guid.NewGuid(),
             RequestedPlannerType = PlannerType.Franklin,
-            ModelDeployment = "evaluation-model",
-            PromptVersion = "v1",
+            CompletionModelDeployment = "evaluation-completion",
+            EmbeddingModelDeployment = "evaluation-embedding",
+            AnalyzerVersion = PaperSyncSchemaVersions.AnalyzerV1,
             AnalyzedAt = DateTimeOffset.UtcNow
         };
 
-        var first = PaperSyncResultMapper.Map(output, context);
-        var second = PaperSyncResultMapper.Map(output, context);
+        var first = PaperSyncResultMapper.Map(operation, context);
+        var second = PaperSyncResultMapper.Map(operation, context);
 
         Assert.Equal(first.Tasks.Select(task => task.Id), second.Tasks.Select(task => task.Id));
         Assert.True(first.Tasks[1].HasIllegibleText);
         Assert.Equal(0.4, first.Tasks[1].Confidence);
+        var boundingBox = Assert.IsType<BoundingBox>(first.Tasks[0].BoundingBox);
+        Assert.Equal(0.06, boundingBox.X, precision: 3);
+        Assert.Equal(0.04, boundingBox.Height, precision: 3);
+    }
+
+    [Fact]
+    public void Mapper_clips_grounding_to_page_bounds()
+    {
+        var operation = ReadFranklinOperation();
+        var task = operation.Result!.Contents[0].Fields["tasks"].ValueArray![0];
+        operation.Result.Contents[0].Fields["tasks"].ValueArray![0] = task with
+        {
+            Source = "D(1,1800,400,2200,400,2200,520,1800,520)"
+        };
+
+        var result = MapFranklinOperation(operation);
+
+        var boundingBox = Assert.IsType<BoundingBox>(result.Tasks[0].BoundingBox);
+        Assert.Equal(0.9, boundingBox.X, precision: 3);
+        Assert.Equal(0.1, boundingBox.Width, precision: 3);
+    }
+
+    [Fact]
+    public void Mapper_rejects_confidence_outside_public_schema_range()
+    {
+        var operation = ReadFranklinOperation();
+        var task = operation.Result!.Contents[0].Fields["tasks"].ValueArray![0];
+        operation.Result.Contents[0].Fields["tasks"].ValueArray![0] = task with
+        {
+            Confidence = 1.1
+        };
+
+        Assert.Throws<InvalidDataException>(() => MapFranklinOperation(operation));
     }
 
     private static void AssertSchemaValid(JsonSchema schema, string instanceJson)
@@ -113,40 +159,6 @@ public sealed class PaperSyncContractTests
         Assert.True(results.IsValid);
     }
 
-    private static void AssertStrictObjects(JsonElement schemaNode)
-    {
-        if (schemaNode.ValueKind == JsonValueKind.Object)
-        {
-            if (schemaNode.TryGetProperty("properties", out var properties))
-            {
-                Assert.True(schemaNode.TryGetProperty("additionalProperties", out var additional));
-                Assert.False(additional.GetBoolean());
-                Assert.True(schemaNode.TryGetProperty("required", out var required));
-
-                var requiredNames = required
-                    .EnumerateArray()
-                    .Select(item => item.GetString())
-                    .ToHashSet(StringComparer.Ordinal);
-                foreach (var property in properties.EnumerateObject())
-                {
-                    Assert.Contains(property.Name, requiredNames);
-                }
-            }
-
-            foreach (var property in schemaNode.EnumerateObject())
-            {
-                AssertStrictObjects(property.Value);
-            }
-        }
-        else if (schemaNode.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in schemaNode.EnumerateArray())
-            {
-                AssertStrictObjects(item);
-            }
-        }
-    }
-
     private static string ReadFixture(string name)
     {
         var assembly = typeof(PaperSyncContractTests).Assembly;
@@ -157,6 +169,25 @@ public sealed class PaperSyncContractTests
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
+
+    private static ContentUnderstandingAnalyzeOperation ReadFranklinOperation() =>
+        JsonSerializer.Deserialize(
+            ReadFixture("franklin.json"),
+            PaperSyncJsonContext.Default.ContentUnderstandingAnalyzeOperation)!;
+
+    private static PaperSyncResult MapFranklinOperation(
+        ContentUnderstandingAnalyzeOperation operation) =>
+        PaperSyncResultMapper.Map(
+            operation,
+            new PaperSyncMappingContext
+            {
+                JobId = Guid.NewGuid(),
+                RequestedPlannerType = PlannerType.Franklin,
+                CompletionModelDeployment = "evaluation-completion",
+                EmbeddingModelDeployment = "evaluation-embedding",
+                AnalyzerVersion = PaperSyncSchemaVersions.AnalyzerV1,
+                AnalyzedAt = DateTimeOffset.UtcNow
+            });
 
     private static string ReadSchema(Func<Stream> openSchema)
     {

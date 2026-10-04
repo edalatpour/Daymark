@@ -1,8 +1,8 @@
 # Paper Sync privacy and data handling
 
-Paper Sync uploads a planner-page image to Daymark's Azure environment so an Azure
-OpenAI vision model can extract tasks, notes, and the page date. Schedule, appointment,
-calendar, and time-slot areas are excluded from extraction.
+Paper Sync uploads a planner-page image to Daymark's Azure environment so Azure
+Content Understanding can extract tasks, notes, the page date, confidence, and source
+grounding. Schedule, appointment, calendar, and time-slot areas are excluded.
 
 ## Image storage
 
@@ -16,23 +16,36 @@ calendar, and time-slot areas are excluded from extraction.
 - `paper-sync-training` is reserved for evaluation samples that a user explicitly opts
   in to share. Paper Sync must not copy images there without that consent.
 
-## Azure OpenAI processing
+## Content Understanding processing
 
-Microsoft states that prompts, completions, embeddings, and training data submitted to
-Azure OpenAI are not available to OpenAI or other customers and are not used to train
-foundation models. See [Data, privacy, and security for Azure OpenAI Service](https://learn.microsoft.com/legal/cognitive-services/openai/data-privacy).
+Content Understanding combines Azure AI services including Document Intelligence and
+customer-owned Foundry model deployments. Paper Sync provisions a supported
+chat-completion model and embedding model on the same `AIServices` resource and maps
+them to Content Understanding. Content Understanding-specific meters and model token
+usage are billed separately.
 
-Azure OpenAI abuse monitoring may retain prompts and model output for up to 30 days and
-may review flagged content. This service-side retention is separate from Daymark's
-30-day image lifecycle policy. Eligible Azure customers can apply for modified abuse
-monitoring; until an exemption is approved for the production subscription, Daymark
-must disclose the default abuse-monitoring behavior.
+Microsoft documents Content Understanding privacy responsibilities in
+[Data, privacy, and security for Content Understanding](https://learn.microsoft.com/azure/foundry/responsible-ai/content-understanding/data-privacy).
+
+The underlying Foundry model processing is also subject to
+[Azure OpenAI data, privacy, and security](https://learn.microsoft.com/legal/cognitive-services/openai/data-privacy).
+Microsoft states that submitted customer data is not available to OpenAI or other
+customers and is not used to train foundation models without permission. Default abuse
+monitoring can store and review model inputs and outputs under Microsoft's applicable
+service terms. Daymark must confirm the current retention terms and whether Modified
+Abuse Monitoring is required before production enablement.
+
+Service-side processing and retention are separate from Daymark's 30-day Blob lifecycle
+policy.
 
 ## Application safeguards
 
-- Azure OpenAI and Blob Storage use managed identity; local/key authentication is
+- Foundry/AIServices and Blob Storage use managed identity; local/key authentication is
   disabled.
 - Transport uses HTTPS with TLS 1.2 or later.
-- Logs and telemetry must not contain images, prompts, model output, or raw user IDs.
-- Model output is treated as untrusted, schema-validated data and is shown for user
-  review before anything is applied.
+- Logs and telemetry must not contain images, analyzer input/output, extracted text,
+  source content, or raw user IDs.
+- Analyzer output is treated as untrusted data, validated, and shown for user review
+  before anything is applied.
+- Image text is data, never an instruction. Analyzer definitions provide no tools or
+  access to other accounts or application data.

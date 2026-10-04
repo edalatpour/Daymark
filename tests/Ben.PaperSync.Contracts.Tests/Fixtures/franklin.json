@@ -1,45 +1,211 @@
 {
-  "schemaVersion": "1.0",
-  "isPlannerPage": true,
-  "legibility": "good",
-  "detectedPlannerType": "franklin",
-  "pageDate": {
-    "value": "2026-10-02",
-    "confidenceLevel": "high"
+  "id": "franklin-operation",
+  "status": "Succeeded",
+  "result": {
+    "analyzerId": "paper-sync-auto-v1",
+    "apiVersion": "2025-11-01",
+    "createdAt": "2026-10-02T17:00:00Z",
+    "contents": [
+      {
+        "kind": "document",
+        "analyzerId": "paper-sync-auto-v1",
+        "mimeType": "image/jpeg",
+        "markdown": "Call Morgan about renewal\nDraft [?] proposal",
+        "unit": "pixel",
+        "pages": [
+          {
+            "pageNumber": 1,
+            "width": 2000,
+            "height": 3000
+          }
+        ],
+        "fields": {
+          "isPlannerPage": {
+            "type": "boolean",
+            "confidence": 0.99,
+            "valueBoolean": true
+          },
+          "detectedPlannerType": {
+            "type": "string",
+            "confidence": 0.98,
+            "valueString": "franklin"
+          },
+          "legibility": {
+            "type": "string",
+            "confidence": 0.94,
+            "valueString": "good"
+          },
+          "pageDate": {
+            "type": "date",
+            "confidence": 0.96,
+            "source": "D(1,100,80,500,80,500,180,100,180)",
+            "valueDate": "2026-10-02"
+          },
+          "tasks": {
+            "type": "array",
+            "confidence": 0.9,
+            "valueArray": [
+              {
+                "type": "object",
+                "confidence": 0.93,
+                "source": "D(1,120,400,1500,400,1500,520,120,520)",
+                "valueObject": {
+                  "text": {
+                    "type": "string",
+                    "confidence": 0.95,
+                    "valueString": "Call Morgan about renewal"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "confidence": 0.98,
+                    "valueString": "A"
+                  },
+                  "priorityOrder": {
+                    "type": "integer",
+                    "confidence": 0.98,
+                    "valueInteger": 1
+                  },
+                  "completed": {
+                    "type": "boolean",
+                    "confidence": 0.97,
+                    "valueBoolean": true
+                  },
+                  "marker": {
+                    "type": "string",
+                    "confidence": 0.97,
+                    "valueString": "✓"
+                  },
+                  "section": {
+                    "type": "string",
+                    "confidence": 0.96,
+                    "valueString": "Prioritized Daily Task List"
+                  },
+                  "readingOrder": {
+                    "type": "integer",
+                    "confidence": 0.99,
+                    "valueInteger": 0
+                  },
+                  "status": {
+                    "type": "string",
+                    "confidence": 0.97,
+                    "valueString": "completed"
+                  },
+                  "hasIllegibleText": {
+                    "type": "boolean",
+                    "confidence": 0.99,
+                    "valueBoolean": false
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "confidence": 0.4,
+                "source": "D(1,120,550,1480,550,1480,680,120,680)",
+                "valueObject": {
+                  "text": {
+                    "type": "string",
+                    "confidence": 0.4,
+                    "valueString": "Draft [?] proposal"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "confidence": 0.9,
+                    "valueString": "B"
+                  },
+                  "priorityOrder": {
+                    "type": "integer",
+                    "confidence": 0.9,
+                    "valueInteger": 2
+                  },
+                  "completed": {
+                    "type": "boolean",
+                    "confidence": 0.9,
+                    "valueBoolean": false
+                  },
+                  "marker": {
+                    "type": "string",
+                    "confidence": 0.86,
+                    "valueString": "→"
+                  },
+                  "section": {
+                    "type": "string",
+                    "confidence": 0.95,
+                    "valueString": "Prioritized Daily Task List"
+                  },
+                  "readingOrder": {
+                    "type": "integer",
+                    "confidence": 0.99,
+                    "valueInteger": 1
+                  },
+                  "status": {
+                    "type": "string",
+                    "confidence": 0.86,
+                    "valueString": "forwarded"
+                  },
+                  "hasIllegibleText": {
+                    "type": "boolean",
+                    "confidence": 0.99,
+                    "valueBoolean": true
+                  }
+                }
+              }
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "confidence": 0.91,
+            "valueArray": [
+              {
+                "type": "object",
+                "confidence": 0.91,
+                "source": "D(1,100,1800,1600,1800,1600,1950,100,1950)",
+                "valueObject": {
+                  "text": {
+                    "type": "string",
+                    "confidence": 0.93,
+                    "valueString": "Morgan prefers a November start."
+                  },
+                  "section": {
+                    "type": "string",
+                    "confidence": 0.97,
+                    "valueString": "Daily Record of Events"
+                  },
+                  "readingOrder": {
+                    "type": "integer",
+                    "confidence": 0.99,
+                    "valueInteger": 0
+                  },
+                  "hasIllegibleText": {
+                    "type": "boolean",
+                    "confidence": 0.99,
+                    "valueBoolean": false
+                  }
+                }
+              }
+            ]
+          },
+          "ignoredRegions": {
+            "type": "array",
+            "confidence": 0.99,
+            "valueArray": [
+              {
+                "type": "string",
+                "valueString": "appointment schedule"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "warnings": []
   },
-  "tasks": [
-    {
-      "text": "Call Morgan about renewal",
-      "priority": "A",
-      "priorityOrder": 1,
-      "completed": true,
-      "marker": "✓",
-      "section": "Prioritized Daily Task List",
-      "readingOrder": 0,
-      "confidenceLevel": "high",
-      "status": "completed"
-    },
-    {
-      "text": "Draft [?] proposal",
-      "priority": "B",
-      "priorityOrder": 2,
-      "completed": false,
-      "marker": "→",
-      "section": "Prioritized Daily Task List",
-      "readingOrder": 1,
-      "confidenceLevel": "low",
-      "status": "forwarded"
+  "usage": {
+    "documentPagesStandard": 1,
+    "contextualizationTokens": 900,
+    "tokens": {
+      "gpt-input": 1200,
+      "gpt-output": 350,
+      "embedding": 400
     }
-  ],
-  "notes": [
-    {
-      "text": "Morgan prefers a November start.",
-      "section": "Daily Record of Events",
-      "readingOrder": 0,
-      "confidenceLevel": "high"
-    }
-  ],
-  "ignoredRegions": [
-    "appointment schedule"
-  ]
+  }
 }

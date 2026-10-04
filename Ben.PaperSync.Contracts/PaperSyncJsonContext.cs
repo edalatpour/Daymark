@@ -7,7 +7,8 @@ namespace Ben.PaperSync.Contracts;
     GenerationMode = JsonSourceGenerationMode.Metadata,
     WriteIndented = true)]
 [JsonSerializable(typeof(PaperSyncResult))]
-[JsonSerializable(typeof(PaperSyncLlmOutput))]
+[JsonSerializable(typeof(ContentUnderstandingAnalyzeOperation))]
+[JsonSerializable(typeof(ContentUnderstandingAnalyzerDefinition))]
 [JsonSerializable(typeof(PaperSyncWarning))]
 [JsonSerializable(typeof(List<PaperSyncWarning>))]
 public sealed partial class PaperSyncJsonContext : JsonSerializerContext;

@@ -36,6 +36,30 @@
       "type": "string",
       "minLength": 1
     },
+    "analyzerId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "analyzerVersion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "contentUnderstandingApiVersion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "embeddingModelDeployment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "analyzedAt": {
       "type": "string",
       "format": "date-time"

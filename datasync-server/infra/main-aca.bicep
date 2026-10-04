@@ -43,43 +43,46 @@ param azureAdInstance string = 'https://login.microsoftonline.com/'
 @description('Whether to provision and configure Paper Sync. Defaults to disabled.')
 param paperSyncEnabled bool = false
 
-@description('Optional Azure OpenAI account name. Defaults to a generated unique name.')
-param paperSyncOpenAIAccountName string = ''
+@description('Optional Foundry/AIServices account name. Defaults to a generated unique name.')
+param paperSyncFoundryAccountName string = ''
 
-@description('Primary Azure OpenAI deployment name.')
-param paperSyncPrimaryDeploymentName string = 'paper-sync-primary'
+@description('Chat-completion deployment name used by Content Understanding.')
+param paperSyncCompletionDeploymentName string = 'paper-sync-completion'
 
-@description('Primary model name selected by the Paper Sync evaluation spike. Required when Paper Sync is enabled.')
-param paperSyncPrimaryModelName string = ''
+@description('Supported chat-completion model selected by the Paper Sync evaluation spike.')
+param paperSyncCompletionModelName string = ''
 
-@description('Pinned primary model version selected by the Paper Sync evaluation spike. Required when Paper Sync is enabled.')
-param paperSyncPrimaryModelVersion string = ''
+@description('Pinned chat-completion model version selected by the Paper Sync evaluation spike.')
+param paperSyncCompletionModelVersion string = ''
 
-@description('Primary model deployment SKU.')
-param paperSyncPrimaryDeploymentSku string = 'GlobalStandard'
-
-@minValue(1)
-@description('Primary model capacity in thousands of tokens per minute.')
-param paperSyncPrimaryDeploymentCapacity int = 10
-
-@description('Whether to provision an optional second model deployment for A/B evaluation.')
-param paperSyncSecondaryDeploymentEnabled bool = false
-
-@description('Optional secondary Azure OpenAI deployment name.')
-param paperSyncSecondaryDeploymentName string = ''
-
-@description('Optional secondary model name.')
-param paperSyncSecondaryModelName string = ''
-
-@description('Optional pinned secondary model version.')
-param paperSyncSecondaryModelVersion string = ''
-
-@description('Secondary model deployment SKU.')
-param paperSyncSecondaryDeploymentSku string = 'GlobalStandard'
+@description('Chat-completion model deployment SKU.')
+param paperSyncCompletionDeploymentSku string = 'GlobalStandard'
 
 @minValue(1)
-@description('Secondary model capacity in thousands of tokens per minute.')
-param paperSyncSecondaryDeploymentCapacity int = 10
+@description('Chat-completion deployment capacity in thousands of tokens per minute.')
+param paperSyncCompletionDeploymentCapacity int = 10
+
+@description('Embedding deployment name used by Content Understanding.')
+param paperSyncEmbeddingDeploymentName string = 'paper-sync-embedding'
+
+@description('Supported embedding model selected by the Paper Sync evaluation spike.')
+param paperSyncEmbeddingModelName string = ''
+
+@description('Pinned embedding model version selected by the Paper Sync evaluation spike.')
+param paperSyncEmbeddingModelVersion string = ''
+
+@description('Embedding model deployment SKU.')
+param paperSyncEmbeddingDeploymentSku string = 'GlobalStandard'
+
+@minValue(1)
+@description('Embedding deployment capacity in thousands of tokens per minute.')
+param paperSyncEmbeddingDeploymentCapacity int = 10
+
+@description('Versioned Content Understanding analyzer ID.')
+param paperSyncAnalyzerId string = 'paper-sync-auto-v1'
+
+@description('Content Understanding GA API version.')
+param paperSyncContentUnderstandingApiVersion string = '2025-11-01'
 
 @description('Optional Paper Sync storage account name. Defaults to a generated unique name.')
 param paperSyncStorageAccountName string = ''
@@ -112,18 +115,21 @@ module resources './resources-aca.bicep' = {
     azureAdClientId: azureAdClientId
     azureAdInstance: azureAdInstance
     paperSyncEnabled: paperSyncEnabled
-    paperSyncOpenAIAccountName: !empty(paperSyncOpenAIAccountName) ? paperSyncOpenAIAccountName : 'oai-${resourceToken}'
-    paperSyncPrimaryDeploymentName: paperSyncPrimaryDeploymentName
-    paperSyncPrimaryModelName: paperSyncPrimaryModelName
-    paperSyncPrimaryModelVersion: paperSyncPrimaryModelVersion
-    paperSyncPrimaryDeploymentSku: paperSyncPrimaryDeploymentSku
-    paperSyncPrimaryDeploymentCapacity: paperSyncPrimaryDeploymentCapacity
-    paperSyncSecondaryDeploymentEnabled: paperSyncSecondaryDeploymentEnabled
-    paperSyncSecondaryDeploymentName: paperSyncSecondaryDeploymentName
-    paperSyncSecondaryModelName: paperSyncSecondaryModelName
-    paperSyncSecondaryModelVersion: paperSyncSecondaryModelVersion
-    paperSyncSecondaryDeploymentSku: paperSyncSecondaryDeploymentSku
-    paperSyncSecondaryDeploymentCapacity: paperSyncSecondaryDeploymentCapacity
+    paperSyncFoundryAccountName: !empty(paperSyncFoundryAccountName)
+      ? paperSyncFoundryAccountName
+      : 'aif-${resourceToken}'
+    paperSyncCompletionDeploymentName: paperSyncCompletionDeploymentName
+    paperSyncCompletionModelName: paperSyncCompletionModelName
+    paperSyncCompletionModelVersion: paperSyncCompletionModelVersion
+    paperSyncCompletionDeploymentSku: paperSyncCompletionDeploymentSku
+    paperSyncCompletionDeploymentCapacity: paperSyncCompletionDeploymentCapacity
+    paperSyncEmbeddingDeploymentName: paperSyncEmbeddingDeploymentName
+    paperSyncEmbeddingModelName: paperSyncEmbeddingModelName
+    paperSyncEmbeddingModelVersion: paperSyncEmbeddingModelVersion
+    paperSyncEmbeddingDeploymentSku: paperSyncEmbeddingDeploymentSku
+    paperSyncEmbeddingDeploymentCapacity: paperSyncEmbeddingDeploymentCapacity
+    paperSyncAnalyzerId: paperSyncAnalyzerId
+    paperSyncContentUnderstandingApiVersion: paperSyncContentUnderstandingApiVersion
     paperSyncStorageAccountName: !empty(paperSyncStorageAccountName)
       ? paperSyncStorageAccountName
       : 'stps${resourceToken}'
